@@ -1417,3 +1417,45 @@ select:focus-visible, textarea:focus-visible, .mas:focus-visible, .hs:focus-visi
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
 }
+
+/* ---------- Colorful atmosphere and subtle dotted texture ---------- */
+:root {
+  --ambient-teal: rgb(74 181 160 / 40%);
+  --ambient-gold: rgb(249 194 100 / 36%);
+  --ambient-blue: rgb(106 166 209 / 28%);
+  --ambient-dot: rgb(30 104 93 / 15%);
+}
+
+:root[data-theme="dark"] {
+  --ambient-teal: rgb(32 153 129 / 30%);
+  --ambient-gold: rgb(197 138 58 / 16%);
+  --ambient-blue: rgb(67 110 196 / 27%);
+  --ambient-dot: rgb(153 214 196 / 12%);
+}
+
+body {
+  background-color: var(--bg);
+  background-image:
+    radial-gradient(circle, var(--ambient-dot) 1px, transparent 1.5px),
+    radial-gradient(ellipse at 0% 8%, var(--ambient-teal), transparent 55%),
+    radial-gradient(ellipse at 100% 30%, var(--ambient-gold), transparent 52%),
+    radial-gradient(ellipse at 20% 100%, var(--ambient-blue), transparent 55%);
+  background-size: 26px 26px, 100% 100%, 100% 100%, 100% 100%;
+  background-repeat: repeat, no-repeat, no-repeat, no-repeat;
+}
+
+/* A richer landscape behind the lesson road. */
+.map {
+  background-image:
+    radial-gradient(ellipse at 5% 10%, var(--ambient-teal), transparent 60%),
+    radial-gradient(ellipse at 100% 80%, var(--ambient-gold), transparent 55%),
+    linear-gradient(155deg, var(--mapa), var(--mapb));
+}
+
+/* Shieldy shares the "sm" class with mock social posts; remove that frame. */
+.mas.sm {
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  overflow: visible;
+}
