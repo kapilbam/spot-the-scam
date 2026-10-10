@@ -1459,3 +1459,236 @@ body {
   border-radius: 0;
   overflow: visible;
 }
+
+/* ---------- Responsive dashboard and lesson side panels ---------- */
+main:has(.learning-layout) {
+  max-width: 1500px;
+}
+
+.learning-layout {
+  display: grid;
+  grid-template-columns: 220px minmax(0, 1fr) 220px;
+  align-items: start;
+  gap: 24px;
+}
+
+.learning-content {
+  min-width: 0;
+}
+
+.learning-layout > aside {
+  position: sticky;
+  top: 24px;
+  min-width: 0;
+}
+
+.side-panel {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+
+.side-panel > summary {
+  padding: 18px;
+  font-weight: 800;
+  font-size: 1.05rem;
+  cursor: pointer;
+  list-style: none;
+}
+
+.side-panel > summary::-webkit-details-marker {
+  display: none;
+}
+
+/* Desktop panels stay visible; native details controls collapse on mobile. */
+.side-panel > .side-body {
+  display: block;
+  padding: 0 18px 18px;
+  max-height: calc(100vh - 130px);
+  overflow-y: auto;
+}
+
+.side-panel > summary:focus-visible,
+.section-links a:focus-visible {
+  outline: 3px solid var(--acc);
+  outline-offset: -3px;
+}
+
+.side-body {
+  font-size: .9rem;
+}
+
+.side-body h3 {
+  font-size: 1.1rem;
+}
+
+.side-body .badge {
+  padding: 5px 10px;
+  font-size: .78rem;
+}
+
+.side-body button {
+  width: 100%;
+}
+
+.side-stat {
+  font-size: 2.8rem;
+  font-weight: 800;
+  line-height: 1.1;
+  color: var(--acc);
+  margin: 4px 0;
+}
+
+.side-stat span {
+  font-size: 1.1rem;
+  color: var(--mute);
+}
+
+.side-small {
+  font-size: .8rem;
+}
+
+.tip-icon {
+  font-size: 2.8rem;
+  margin-bottom: 12px;
+}
+
+.side-note {
+  margin-top: 20px;
+  padding: 14px;
+  background: var(--soft);
+  border-radius: 14px;
+}
+
+.lesson-link {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  text-align: left;
+  padding: 10px;
+  margin: 5px 0;
+  border: 1px solid transparent;
+  background: transparent;
+  font-size: .84rem;
+  line-height: 1.4;
+}
+
+.lesson-link small {
+  display: block;
+  font-size: .7rem;
+  color: var(--mute);
+  margin-bottom: 2px;
+}
+
+.lesson-link.active {
+  background: var(--soft);
+  border-color: var(--acc);
+  color: var(--acc);
+}
+
+.section-links a {
+  display: block;
+  color: var(--mute);
+  text-decoration: none;
+  padding: 10px;
+  margin: 4px 0;
+  border-radius: 10px;
+  min-height: 44px;
+}
+
+.section-links a:hover {
+  color: var(--acc);
+  background: var(--soft);
+}
+
+.learning-content h2[id],
+.learning-content h3[id] {
+  scroll-margin-top: 24px;
+}
+
+.learning-content .map {
+  width: 100%;
+  left: auto;
+  transform: none;
+}
+
+@media (max-width: 1240px) {
+  .learning-layout {
+    grid-template-columns: 200px minmax(0, 1fr);
+    gap: 20px;
+  }
+
+  .learning-layout > aside:last-child {
+    position: static;
+    grid-column: 2;
+  }
+
+  .learning-layout > aside:last-child .side-body {
+    max-height: none;
+  }
+}
+
+@media (max-width: 1000px) {
+  .learning-layout {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .learning-layout > aside,
+  .learning-content {
+    width: 100%;
+  }
+
+  .learning-layout > aside {
+    position: static;
+  }
+
+  .lesson-layout > aside:last-child {
+    order: -1;
+  }
+
+  .lesson-layout > aside:first-child {
+    order: -2;
+  }
+
+  .dashboard-layout > aside:first-child {
+    order: 1;
+  }
+
+  .dashboard-layout > aside:last-child {
+    order: 2;
+  }
+
+  .side-panel > summary::after {
+    content: '+';
+    float: right;
+    color: var(--acc);
+  }
+
+  .side-panel[open] > summary::after {
+    content: '−';
+  }
+
+  .side-panel:not([open]) > .side-body {
+    display: none;
+  }
+
+  .side-panel > .side-body {
+    max-height: none;
+  }
+}
+
+@media (max-width: 640px) {
+  .learning-content .cmp,
+  .learning-content .two {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .learning-content .cmp > div {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+}

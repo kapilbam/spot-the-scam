@@ -293,6 +293,65 @@ function toast(t) {
   setTimeout(() => e.remove(), 2800);
 }
 
+/* Responsive side panels reuse the existing lesson and progress functions. */
+function sidePanel(title, content, label) {
+  return `<aside aria-label="${label}"><details class="side-panel" ${innerWidth > 1000 ? 'open' : ''}><summary>${title}</summary><div class="side-body">${content}</div></details></aside>`;
+}
+
+const sidePanelMedia = matchMedia('(min-width: 1001px)');
+sidePanelMedia.addEventListener('change', event => {
+  document.querySelectorAll('.side-panel').forEach(panel => { panel.open = event.matches; });
+});
+
+function mountSideLayout(left, right, kind) {
+  const app = $('#app');
+  const content = document.createElement('div');
+  content.className = 'learning-content';
+  while (app.firstChild) content.append(app.firstChild);
+  const layout = document.createElement('div');
+  layout.className = `learning-layout ${kind}`;
+  layout.innerHTML = left + '<div class="content-slot"></div>' + right;
+  layout.querySelector('.content-slot').replaceWith(content);
+  app.append(layout);
+}
+
+function dashboardPanels() {
+  const n = nDone();
+  const next = L.findIndex((_, i) => !passed(i));
+  mountSideLayout(
+    sidePanel('🌱 Your progress', `<p class="side-stat">${n}<span> / 10</span></p><p class="mute">Lessons passed</p><span class="badge">${badge(n)}</span><p class="mute">${next < 0 ? 'Every lesson passed. Your final challenge is ready!' : `Up next: ${esc(L[next].t)}`}</p><button class="pri" id="continue-learning">${next < 0 ? 'Open final exam' : 'Continue learning'}</button><p class="mute side-small">Final exam best: ${best() < 0 ? 'Not taken yet' : best() + '/20'}</p>`, 'Your learning progress'),
+    sidePanel('💡 Safety tip', '<div class="tip-icon" aria-hidden="true">🛡️</div><h3>Pause before you click</h3><p>Unexpected message? Open the official app or website yourself before taking action.</p><div class="side-note"><b>Remember</b><p>Never share passwords or verification codes—even with someone claiming to be support.</p></div>', 'Online safety reminders'),
+    'dashboard-layout'
+  );
+  $('#continue-learning').onclick = () => next < 0 ? stopSheet(10) : lesson(next);
+}
+
+function lessonPanels(current) {
+  const card = $('#app .card');
+  const headings = [...card.querySelectorAll('h2, h3')].filter(h => !h.closest('.cmp'));
+  headings.forEach((h, index) => { h.id = `lesson-section-${index}`; });
+  const lessons = L.map((l, i) => {
+    const locked = i > 0 && !passed(i - 1);
+    const status = passed(i) ? 'Completed' : locked ? 'Locked' : 'Available';
+    return `<button class="lesson-link ${i === current ? 'active' : ''}" data-lesson="${i}" ${i === current ? 'aria-current="page"' : ''} aria-label="Lesson ${i + 1}: ${esc(l.t)}. ${status}"><span aria-hidden="true">${passed(i) ? '✓' : locked ? '🔒' : l.e}</span><span><small>Lesson ${i + 1}</small>${esc(l.t)}</span></button>`;
+  }).join('');
+  mountSideLayout(
+    sidePanel('📚 Lessons', `<nav aria-label="Course lessons">${lessons}</nav><p class="mute side-small">Pass each quiz with 6/10 to unlock the next lesson.</p>`, 'Lesson navigation'),
+    sidePanel('📍 On this page', `<nav class="section-links" aria-label="Lesson sections">${headings.map((h, index) => `<a href="#${h.id}">${index === 0 ? 'Overview' : esc(h.textContent)}</a>`).join('')}</nav><div class="side-note"><b>Ready for practice?</b><p>Read the examples, then test what you noticed.</p><button id="side-practice">Inspect examples →</button></div>`, 'Sections in this lesson'),
+    'lesson-layout'
+  );
+  document.querySelectorAll('[data-lesson]').forEach(b => {
+    b.onclick = () => {
+      const target = +b.dataset.lesson;
+      if (target > 0 && !passed(target - 1)) { lockMsg(target); return; }
+      lesson(target);
+      $('#app h2').setAttribute('tabindex', '-1');
+      $('#app h2').focus({ preventScroll: true });
+    };
+  });
+  $('#side-practice').onclick = () => explore(current);
+}
+
 function home() {
   topbar();
   const p = prog(), n = nDone(), tgt = n === 10 ? 10 : Math.max(0, L.findIndex((_, i) => !passed(i)));
@@ -310,6 +369,7 @@ function home() {
   }).join('');
   const yy = i => Y0 + GAP * i, d = `M${geo.sx} ${yy(0)} L${geo.xR} ${yy(0)} A${R} ${R} 0 0 1 ${geo.xR} ${yy(1)} L${geo.xL} ${yy(1)} A${R} ${R} 0 0 0 ${geo.xL} ${yy(2)} L${geo.xR} ${yy(2)} A${R} ${R} 0 0 1 ${geo.xR} ${yy(3)} L${geo.ex} ${yy(3)}`;
   $('#app').innerHTML = `<div class="card"><div class="dm">${MAS('sm')}<div class="bub3" id="mb">Hi, I’m Shieldy! Tap me 👋</div></div><h2>Your road to scam-proof</h2><p class="mute">Tap a stop to open its lesson. Pass its quiz (6 out of 10) and the car drives on and unlocks the next stop. The final exam waits at the end.</p><div class="bar" role="progressbar" aria-valuenow="${n}" aria-valuemin="0" aria-valuemax="10"><i style="width:${n * 10}%"></i></div><p><b>${n}/10 lessons passed</b> <span class="badge">${badge(n)}</span></p></div><div class="map${mapWide ? ' wide' : ''}" id="map" style="aspect-ratio:${MW}/${MH}"><svg class="roadsvg" viewBox="${-OX} 0 ${MW} ${MH}" aria-hidden="true"><path class="rbed" d="${d}"/><path class="rtop" id="rp" d="${d}"/><path class="rgreen" id="rg" d="${d}"/><path class="rdash" d="${d}"/></svg>${nodes}<div class="car2" id="car">${CARSVG}</div></div>`;
+  dashboardPanels();
   document.querySelectorAll('.mnode').forEach(b => b.onclick = () => stopSheet(+b.dataset.k));
   mascotInit(false, true);
   const rp = $('#rp'), rg = $('#rg'), car = $('#car'), tot = rp.getTotalLength(),
@@ -379,6 +439,7 @@ function lesson(i) {
   S = { i };
   const l = L[i];
   $('#app').innerHTML = `<button id="bk">← All lessons</button><div class="card" style="margin-top:12px"><div class="em">${l.e}</div><h2>Lesson ${i + 1}: ${l.t}</h2><p>${l.i}</p>${l.sp ? `<h3>🔍 Your spot check: ask these 4 questions</h3><ol class="nl">${l.sp.map(x => `<li>${x}</li>`).join('')}</ol>` : ''}${l.c ? cmpHtml(l.c) : ''}${l.k ? `<h3>📚 Key facts to remember (your quiz covers these)</h3><ul class="kf">${l.k.map(x => `<li>${x}</li>`).join('')}</ul>` : ''}<div class="two"><div><h3 class="do">✔ Do</h3><ul>${l.d.map(x => `<li>${x}</li>`).join('')}</ul></div><div><h3 class="dont">✖ Don't</h3><ul>${l.n.map(x => `<li>${x}</li>`).join('')}</ul></div></div><button class="pri" id="go">Next: inspect real-looking examples</button>${passed(i) ? ' <button id="sq">🔁 Skip to the quiz (already passed)</button>' : ''}</div>`;
+  lessonPanels(i);
   $('#bk').onclick = home;
   $('#go').onclick = () => explore(i);
   if ($('#sq')) $('#sq').onclick = () => lq(i);
