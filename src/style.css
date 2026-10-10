@@ -1817,3 +1817,25 @@ main:has(.learning-layout) {
     max-width: 100%;
   }
 }
+
+/* Shieldy's face in the site wordmark. */
+button.logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.brand-shieldy {
+  display: block;
+  flex-shrink: 0;
+  width: 42px;
+  height: 46px;
+  filter: drop-shadow(0 2px 2px rgb(0 0 0 / 10%));
+}
+
+@media (max-width: 520px) {
+  .brand-shieldy {
+    width: 32px;
+    height: 36px;
+  }
+}

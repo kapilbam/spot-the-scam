@@ -1154,6 +1154,7 @@ const applyTheme = () => {
 };
 
 function boot() {
+  $('#logo').innerHTML = `<svg class="brand-shieldy" viewBox="0 0 100 110" width="42" height="46" aria-hidden="true" focusable="false"><path d="M50 5 91 19v36c0 23-17 40-41 50C26 95 9 78 9 55V19Z" fill="#90AEAD" stroke="#244855" stroke-width="4" stroke-linejoin="round"/><path d="M50 15 81 26v29c0 18-13 32-31 40C32 87 19 73 19 55V26Z" fill="#b7cccb"/><circle cx="35" cy="43" r="12" fill="#fff" stroke="#244855" stroke-width="2"/><circle cx="65" cy="43" r="12" fill="#fff" stroke="#244855" stroke-width="2"/><circle cx="36" cy="44" r="6" fill="#244855"/><circle cx="64" cy="44" r="6" fill="#244855"/><circle cx="38" cy="41" r="2" fill="#fff"/><circle cx="66" cy="41" r="2" fill="#fff"/><circle cx="24" cy="62" r="6" fill="#E64833" opacity=".35"/><circle cx="76" cy="62" r="6" fill="#E64833" opacity=".35"/><path d="M35 64q15 19 30 0" fill="none" stroke="#244855" stroke-width="4" stroke-linecap="round"/></svg><span>Spot the Scam!</span>`;
   muted = st.get('sts-mute', false);
   theme = st.get('sts-theme', 'light');
   applyTheme();
