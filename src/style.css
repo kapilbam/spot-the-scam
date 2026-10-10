@@ -1692,3 +1692,128 @@ main:has(.learning-layout) {
     overflow-wrap: anywhere;
   }
 }
+
+/* ---------- Practice arcade ---------- */
+.arcade-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.arcade-actions {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.arcade-actions button {
+  padding: 18px 14px;
+  text-align: left;
+  background: var(--soft);
+}
+
+.arcade-actions small,
+.activity-card .les small {
+  display: block;
+  margin-top: 6px;
+  color: var(--mute);
+  font-weight: 400;
+  line-height: 1.5;
+}
+
+.activity-card {
+  margin-top: 16px;
+}
+
+.detective-message {
+  display: grid;
+  gap: 10px;
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--inp);
+}
+
+.clue {
+  text-align: left;
+  overflow-wrap: anywhere;
+}
+
+.clue[aria-pressed="true"] {
+  background: var(--soft);
+  border-color: var(--acc);
+  box-shadow: inset 4px 0 var(--acc);
+}
+
+.clue[aria-pressed="true"]::before {
+  content: '✓ ';
+}
+
+.clue-explanations {
+  padding-left: 24px;
+}
+
+.clue-explanations li {
+  margin: 12px 0;
+}
+
+.training-chat {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  border-radius: 18px;
+  background: var(--bg);
+}
+
+.training-bubble {
+  max-width: 90%;
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: 16px 16px 16px 4px;
+  background: var(--panel);
+  overflow-wrap: anywhere;
+}
+
+.training-bubble small {
+  display: block;
+  font-weight: 800;
+  color: var(--mute);
+  margin-bottom: 4px;
+}
+
+.training-bubble.you {
+  align-self: flex-end;
+  border-radius: 16px 16px 4px 16px;
+  background: var(--soft);
+}
+
+.training-bubble.coach {
+  max-width: 100%;
+  border-style: dashed;
+  background: var(--warm);
+}
+
+.achievement {
+  padding: 20px;
+  border: 1px dashed var(--line);
+  border-radius: 18px;
+  background: var(--bg);
+}
+
+.achievement.earned {
+  border: 1px solid var(--okbd);
+  background: var(--okbg2);
+}
+
+@media (max-width: 700px) {
+  .arcade-actions {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .training-bubble {
+    max-width: 100%;
+  }
+}

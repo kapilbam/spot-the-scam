@@ -369,6 +369,8 @@ function home() {
   }).join('');
   const yy = i => Y0 + GAP * i, d = `M${geo.sx} ${yy(0)} L${geo.xR} ${yy(0)} A${R} ${R} 0 0 1 ${geo.xR} ${yy(1)} L${geo.xL} ${yy(1)} A${R} ${R} 0 0 0 ${geo.xL} ${yy(2)} L${geo.xR} ${yy(2)} A${R} ${R} 0 0 1 ${geo.xR} ${yy(3)} L${geo.ex} ${yy(3)}`;
   $('#app').innerHTML = `<div class="card"><div class="dm">${MAS('sm')}<div class="bub3" id="mb">Hi, I’m Shieldy! Tap me 👋</div></div><h2>Your road to scam-proof</h2><p class="mute">Tap a stop to open its lesson. Pass its quiz (6 out of 10) and the car drives on and unlocks the next stop. The final exam waits at the end.</p><div class="bar" role="progressbar" aria-valuenow="${n}" aria-valuemin="0" aria-valuemax="10"><i style="width:${n * 10}%"></i></div><p><b>${n}/10 lessons passed</b> <span class="badge">${badge(n)}</span></p></div><div class="map${mapWide ? ' wide' : ''}" id="map" style="aspect-ratio:${MW}/${MH}"><svg class="roadsvg" viewBox="${-OX} 0 ${MW} ${MH}" aria-hidden="true"><path class="rbed" d="${d}"/><path class="rtop" id="rp" d="${d}"/><path class="rgreen" id="rg" d="${d}"/><path class="rdash" d="${d}"/></svg>${nodes}<div class="car2" id="car">${CARSVG}</div></div>`;
+  $('#map').insertAdjacentHTML('beforebegin', arcadeCard());
+  wireArcade();
   dashboardPanels();
   document.querySelectorAll('.mnode').forEach(b => b.onclick = () => stopSheet(+b.dataset.k));
   mascotInit(false, true);
@@ -979,6 +981,166 @@ addEventListener('pointermove', e => {
         a = Math.atan2(e.clientY - (r.top + r.height * .4), e.clientX - (r.left + r.width / 2));
   m.querySelectorAll('.pu').forEach(p => p.style.transform = `translate(${Math.cos(a) * 4}px,${Math.sin(a) * 3}px)`);
 });
+
+/* ---------- Practice arcade and account achievements ---------- */
+const DETECTIVE_CASES = [
+  { id: 'bank', title: 'The urgent bank email', intro: 'Your account will close in 30 minutes unless you verify it.', clues: [
+    ['From: security@riverbank-help.example', true, 'The sender uses a separate support-looking domain. Verify through the bank’s official app.'],
+    ['Subject: Your account closes in 30 minutes!', true, 'A threatening deadline pressures you to act without checking.'],
+    ['Hello customer,', false, 'A generic greeting alone does not prove a scam. Look for stronger evidence.'],
+    ['Verify now → riverbank-login.example', true, 'The destination is a lookalike site. Open the real bank website yourself.'],
+    ['Reply with your password and verification code.', true, 'Passwords and verification codes must never be shared.']
+  ] },
+  { id: 'parcel', title: 'The delivery surprise', intro: 'A message claims your parcel is waiting for a small payment.', clues: [
+    ['Delivery notification', false, 'A delivery subject can be normal. Inspect the actual request.'],
+    ['Pay a $1.99 redelivery fee at parcel-fees.example', true, 'An unexpected payment link may be collecting card details. Check the carrier directly.'],
+    ['Open receipt.pdf.exe to see your tracking number.', true, 'The final extension is .exe: a program disguised as a PDF.'],
+    ['Do not contact the carrier. Only this link can help.', true, 'Discouraging independent verification is a strong warning sign.']
+  ] },
+  { id: 'job', title: 'The too-easy job offer', intro: 'A recruiter offers a remote job without an interview.', clues: [
+    ['Remote assistant position', false, 'Remote jobs exist. The title alone is not evidence of fraud.'],
+    ['Buy your equipment using gift cards today.', true, 'Gift-card payments are difficult to recover and are a common scam request.'],
+    ['Send your bank login so we can set up payroll.', true, 'Payroll never needs your bank password.'],
+    ['We guarantee $5,000 per week with no interview.', true, 'An unrealistic guarantee without a hiring process deserves independent verification.']
+  ] }
+];
+
+const CHAT_CASES = [
+  { id: 'support', title: 'The fake support agent', nodes: {
+    start: { text: 'Hi, I’m from account support. Someone is signing into your account. Send me the code we just texted you.', options: [['I will use the official app to check.', 'verify'], ['Here is my code.', 'code']] },
+    code: { text: 'Thanks! Now send your password too.', options: [['Stop sharing information and secure my account through the official app.', 'recover'], ['Send my password.', 'loss']] },
+    verify: { text: 'There is no time! You must give me the code now or your account will be deleted.', options: [['End this chat and report it.', 'win'], ['Share the code to avoid deletion.', 'code']] },
+    win: { result: true, text: 'You kept your code private and verified independently. Report and block the sender.' },
+    recover: { result: false, text: 'Good recovery, but the code was already exposed. Use the official service to secure the account and review active sessions. Replay to practise preventing the exposure.' },
+    loss: { result: false, text: 'The scammer now has your code and password. In a real incident, use the official service to change the password and secure the account immediately.' }
+  } },
+  { id: 'friend', title: 'A friend needs money', nodes: {
+    start: { text: 'Hey! It’s me. I lost my phone and need $200 urgently. Please send it to this new account.', options: [['Call my friend using their saved number.', 'call'], ['Send money immediately.', 'loss']] },
+    call: { text: 'Please don’t call! I’m in a meeting. Keep this between us.', options: [['Verify through another known contact before paying.', 'win'], ['Trust the message and pay.', 'loss']] },
+    win: { result: true, text: 'Your friend confirms they did not send the message. Independent verification prevented an impersonation scam.' },
+    loss: { result: false, text: 'Urgency and secrecy bypassed verification. If money was sent in real life, contact the payment provider promptly and report the impersonation.' }
+  } },
+  { id: 'prize', title: 'The prize notification', nodes: {
+    start: { text: 'Congratulations! You won a new laptop. Pay a $30 processing fee to claim it.', options: [['Ask how I entered this competition.', 'pressure'], ['Pay the fee.', 'loss']] },
+    pressure: { text: 'You were selected automatically. Send gift cards in the next ten minutes or we choose someone else.', options: [['Decline, block, and report the message.', 'win'], ['Buy gift cards to keep the prize.', 'loss']] },
+    win: { result: true, text: 'You spotted an unexpected prize, a fee, gift cards, and time pressure. You kept your money and information safe.' },
+    loss: { result: false, text: 'The prize was bait for a payment. Pause when an unexpected reward requires money, and verify the organiser independently.' }
+  } }
+];
+
+function arcadeProgress() {
+  return (users()[me] || {}).arcade || { completed: {} };
+}
+
+function earnActivity(key) {
+  const accounts = users();
+  const account = accounts[me];
+  if (!account) return false;
+  account.arcade = account.arcade || { completed: {} };
+  account.arcade.completed = account.arcade.completed || {};
+  if (account.arcade.completed[key]) return false;
+  account.arcade.completed[key] = true;
+  save(accounts);
+  return true;
+}
+
+function achievementState() {
+  const completed = arcadeProgress().completed || {};
+  const detectives = DETECTIVE_CASES.filter(c => completed['detective-' + c.id]).length;
+  const chats = CHAT_CASES.filter(c => completed['chat-' + c.id]).length;
+  const lessons = nDone();
+  const xp = lessons * 50 + detectives * 40 + chats * 60 + (best() >= 12 ? 100 : 0);
+  return { completed, xp, badges: [
+    ['🔍', 'Link Inspector', detectives >= 1, 'Complete one detective case'],
+    ['🕵️', 'Scam Detective', detectives === DETECTIVE_CASES.length, 'Complete all detective cases'],
+    ['💬', 'Conversation Defender', chats >= 1, 'Complete one chat safely'],
+    ['🛡️', 'Social Engineering Pro', chats === CHAT_CASES.length, 'Complete all chats safely'],
+    ['📚', 'Knowledge Builder', lessons >= 3, 'Pass three lessons'],
+    ['🏆', 'Course Champion', lessons === 10 && best() >= 12, 'Pass every lesson and the final exam']
+  ] };
+}
+
+function arcadeCard() {
+  const { xp } = achievementState();
+  return `<div class="card arcade-card"><div class="arcade-heading"><div><h2>Play, practise, protect</h2><p class="mute">Try a short challenge. No timer, no pressure.</p></div><span class="badge">⭐ ${xp} XP</span></div><div class="arcade-actions"><button id="open-detective">🔍 Scam Detective<small>Find clues in suspicious messages</small></button><button id="open-chats">💬 Scam Chats<small>Your choices change the story</small></button><button id="open-badges">🏅 My achievements<small>See your XP and earned badges</small></button></div></div>`;
+}
+
+function wireArcade() {
+  $('#open-detective').onclick = () => activityHub('detective');
+  $('#open-chats').onclick = () => activityHub('chat');
+  $('#open-badges').onclick = achievementView;
+}
+
+function activityHub(type) {
+  topbar();
+  const cases = type === 'detective' ? DETECTIVE_CASES : CHAT_CASES;
+  const completed = arcadeProgress().completed || {};
+  $('#app').innerHTML = `<button id="arcade-back">← Dashboard</button><div class="card activity-card"><h2>${type === 'detective' ? '🔍 Scam Detective' : '💬 Scam Chats'}</h2><p class="mute">${type === 'detective' ? 'Tap the suspicious clues, then check your findings.' : 'Choose your replies and see how the conversation unfolds.'} All messages are fictional.</p><div class="grid">${cases.map((c, i) => `<button class="les" data-case="${i}"><b>${esc(c.title)}</b><small>${completed[type + '-' + c.id] ? '✓ Completed · replay for practice' : type === 'detective' ? 'Earn 40 XP on first completion' : 'Earn 60 XP on first safe completion'}</small></button>`).join('')}</div></div>`;
+  $('#arcade-back').onclick = home;
+  document.querySelectorAll('[data-case]').forEach(b => b.onclick = () => type === 'detective' ? detectiveView(+b.dataset.case) : chatView(+b.dataset.case));
+  scrollTo(0, 0);
+}
+
+function detectiveView(index) {
+  const c = DETECTIVE_CASES[index];
+  const selected = new Set();
+  $('#app').innerHTML = `<button id="case-back">← Detective cases</button><div class="card activity-card"><p class="mute">Fictional training message · 40 XP</p><h2>${esc(c.title)}</h2><p>${esc(c.intro)}</p><p>Select every suspicious clue. Some details are neutral.</p><div class="detective-message">${c.clues.map((clue, i) => `<button class="clue" data-clue="${i}" aria-pressed="false">${esc(clue[0])}</button>`).join('')}</div><p class="mute" id="clue-count" aria-live="polite">0 clues selected</p><button class="pri" id="check-clues">Check my findings</button><div id="detective-feedback" aria-live="polite"></div></div>`;
+  $('#case-back').onclick = () => activityHub('detective');
+  document.querySelectorAll('[data-clue]').forEach(b => b.onclick = () => {
+    const i = +b.dataset.clue;
+    if (selected.has(i)) selected.delete(i); else selected.add(i);
+    b.setAttribute('aria-pressed', String(selected.has(i)));
+    $('#clue-count').textContent = `${selected.size} clues selected`;
+    $('#detective-feedback').textContent = '';
+  });
+  $('#check-clues').onclick = () => {
+    const correct = c.clues.every((clue, i) => selected.has(i) === clue[1]);
+    const first = correct && earnActivity('detective-' + c.id);
+    $('#detective-feedback').innerHTML = `<div class="fb ${correct ? 'ok' : 'bad'}"><b>${correct ? first ? 'Case solved! +40 XP' : 'Case solved! Already earned—great practice.' : 'Keep investigating. Review the clues below and try again.'}</b></div><ul class="clue-explanations">${c.clues.map((clue, i) => `<li><b>${clue[1] ? '🚩 Red flag' : '○ Neutral detail'}${selected.has(i) === clue[1] ? ' · Correct' : ' · Review'}:</b> ${esc(clue[2])}</li>`).join('')}</ul>${correct ? '<button id="detective-finish">Choose another case →</button>' : ''}`;
+    if (correct) $('#detective-finish').onclick = () => activityHub('detective');
+  };
+  scrollTo(0, 0);
+}
+
+function chatView(index) {
+  const c = CHAT_CASES[index];
+  let current = 'start';
+  const transcript = [];
+  $('#app').innerHTML = `<button id="chat-back">← Chat scenarios</button><div class="card activity-card"><p class="mute">Fictional conversation · 60 XP for a safe outcome</p><h2>${esc(c.title)}</h2><p class="mute">Choose a reply. No personal information is needed.</p><div id="chat-transcript" class="training-chat" role="log" aria-label="Practice conversation" aria-live="polite"></div><div id="chat-choices"></div></div>`;
+  $('#chat-back').onclick = () => activityHub('chat');
+  function render() {
+    const node = c.nodes[current];
+    transcript.push({ text: node.text, who: node.result !== undefined ? 'coach' : 'sender' });
+    $('#chat-transcript').innerHTML = transcript.map(t => `<div class="training-bubble ${t.who}"><small>${t.who === 'you' ? 'You' : t.who === 'coach' ? 'Coach' : 'Unknown sender'}</small>${esc(t.text)}</div>`).join('');
+    if (node.result !== undefined) {
+      const first = node.result && earnActivity('chat-' + c.id);
+      $('#chat-choices').innerHTML = `<div class="fb ${node.result ? 'ok' : 'bad'}" role="status"><b>${node.result ? first ? 'Safe outcome! +60 XP' : 'Safe outcome! XP already earned.' : 'Learning moment—try a different path.'}</b></div><button class="pri" id="chat-replay">Replay scenario</button> <button id="chat-next">More scenarios</button>`;
+      $('#chat-replay').onclick = () => chatView(index);
+      $('#chat-next').onclick = () => activityHub('chat');
+    } else {
+      $('#chat-choices').innerHTML = `<p><b>Your reply</b></p>${node.options.map((o, i) => `<button class="opt" data-reply="${i}">${esc(o[0])}</button>`).join('')}`;
+      document.querySelectorAll('[data-reply]').forEach(b => b.onclick = () => {
+        const option = node.options[+b.dataset.reply];
+        transcript.push({ text: option[0], who: 'you' });
+        current = option[1];
+        render();
+        $('#chat-choices button').focus({ preventScroll: true });
+        $('#chat-choices').scrollIntoView({ block: 'nearest' });
+      });
+    }
+  }
+  render();
+  scrollTo(0, 0);
+}
+
+function achievementView() {
+  const { xp, badges } = achievementState();
+  const level = Math.floor(xp / 200) + 1;
+  $('#app').innerHTML = `<button id="badge-back">← Dashboard</button><div class="card activity-card"><h2>🏅 Your achievements</h2><p class="side-stat">${xp} XP</p><p><b>Level ${level}</b> · ${200 - xp % 200} XP to the next level</p><div class="bar" role="progressbar" aria-label="Progress to next level" aria-valuenow="${xp % 200}" aria-valuemin="0" aria-valuemax="200"><i style="width:${xp % 200 / 2}%"></i></div><p class="mute">50 XP per passed lesson, 40 per solved detective case, 60 per safe chat, and 100 for passing the final exam. Each reward is earned once. Your progress stays with this account in this browser.</p><div class="grid">${badges.map(b => `<div class="achievement ${b[2] ? 'earned' : ''}"><span class="em" aria-hidden="true">${b[0]}</span><h3>${b[1]}</h3><b>${b[2] ? '✓ Earned' : 'Locked'}</b><p class="mute">${b[3]}</p></div>`).join('')}</div></div>`;
+  $('#badge-back').onclick = home;
+  scrollTo(0, 0);
+}
+
 
 /* ---------- Start-up ---------- */
 let theme = 'light';
