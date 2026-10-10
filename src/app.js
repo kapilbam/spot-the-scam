@@ -4,281 +4,941 @@
  * Loads BEFORE inspection.js, which adds the mock interfaces and examples to the lessons.
  */
 
-const $=s=>document.querySelector(s),esc=s=>String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+// DOM query selector shorthand and HTML entity escaper
+const $ = s => document.querySelector(s);
+const esc = s => String(s).replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m]));
 
-const sh=a=>a.map(x=>[Math.random(),x]).sort((x,y)=>x[0]-y[0]).map(x=>x[1]);
+// Fisher-Yates / random shuffle helper for arrays and quiz options
+const sh = a => a.map(x => [Math.random(), x]).sort((x, y) => x[0] - y[0]).map(x => x[1]);
 
-const st={get(k,d,s=localStorage){try{return JSON.parse(s.getItem(k))??d}catch(e){return d}},set(k,v,s=localStorage){try{s.setItem(k,JSON.stringify(v))}catch(e){}},del(k,s=sessionStorage){try{s.removeItem(k)}catch(e){}}};
+// Local/Session storage wrapper utility with safe JSON parsing
+const st = {
+  get(k, d, s = localStorage) {
+    try { return JSON.parse(s.getItem(k)) ?? d } catch (e) { return d }
+  },
+  set(k, v, s = localStorage) {
+    try { s.setItem(k, JSON.stringify(v)) } catch (e) { }
+  },
+  del(k, s = sessionStorage) {
+    try { s.removeItem(k) } catch (e) { }
+  }
+};
 
-let CFT=0;
+let CFT = 0;
 
-function confetti(src){const c=$('#cf'),x=c.getContext('2d');if(matchMedia('(prefers-reduced-motion:reduce)').matches)return;const t=++CFT;c.width=innerWidth;c.height=innerHeight;
- let ox=c.width/2,oy=c.height*.7;const m=src||$('#mas');if(m&&m.getBoundingClientRect){const r=m.getBoundingClientRect();ox=r.left+r.width/2;oy=r.top+r.height*.35}
- const PAL=document.documentElement.dataset.theme==='dark'?['#FBE9D0','#E64833','#90AEAD','#F2705B','#b3cccb','#c98a76']:['#244855','#E64833','#874F41','#90AEAD','#F2705B','#5E8591'],col=()=>PAL[Math.floor(Math.random()*PAL.length)],p=[];
- for(let k=0;k<110;k++){const a=-Math.PI/2+(Math.random()-.5)*2.4,v=7+Math.random()*11;p.push({x:ox,y:oy,vx:Math.cos(a)*v,vy:Math.sin(a)*v,c:col(),r:Math.random()*6,w:6+Math.random()*5,h:8+Math.random()*6,g:.26})}
- for(let k=0;k<80;k++)p.push({x:Math.random()*c.width,y:-20-Math.random()*220,vx:Math.random()*3-1.5,vy:Math.random()*3+2,c:col(),r:Math.random()*6,w:7,h:10,g:.02});
- let n=0;(function f(){if(t!==CFT)return;x.clearRect(0,0,c.width,c.height);p.forEach(q=>{q.vy+=q.g;q.x+=q.vx;q.y+=q.vy;q.vx*=.992;q.r+=.15;x.save();x.translate(q.x,q.y);x.rotate(q.r);x.fillStyle=q.c;x.fillRect(-q.w/2,-q.h/2,q.w,q.h);x.restore()});if(++n<230)requestAnimationFrame(f);else x.clearRect(0,0,c.width,c.height)})()}
+// Confetti particle animation generator for achievements
+function confetti(src) {
+  const c = $('#cf'), x = c.getContext('2d');
+  if (matchMedia('(prefers-reduced-motion:reduce)').matches) return;
+  const t = ++CFT;
+  c.width = innerWidth;
+  c.height = innerHeight;
+  let ox = c.width / 2, oy = c.height * .7;
+  const m = src || $('#mas');
+  if (m && m.getBoundingClientRect) {
+    const r = m.getBoundingClientRect();
+    ox = r.left + r.width / 2;
+    oy = r.top + r.height * .35;
+  }
+  const PAL = document.documentElement.dataset.theme === 'dark' 
+    ? ['#FBE9D0', '#E64833', '#90AEAD', '#F2705B', '#b3cccb', '#c98a76'] 
+    : ['#244855', '#E64833', '#874F41', '#90AEAD', '#F2705B', '#5E8591'];
+  const col = () => PAL[Math.floor(Math.random() * PAL.length)];
+  const p = [];
+
+  for (let k = 0; k < 110; k++) {
+    const a = -Math.PI / 2 + (Math.random() - .5) * 2.4, v = 7 + Math.random() * 11;
+    p.push({ x: ox, y: oy, vx: Math.cos(a) * v, vy: Math.sin(a) * v, c: col(), r: Math.random() * 6, w: 6 + Math.random() * 5, h: 8 + Math.random() * 6, g: .26 });
+  }
+  for (let k = 0; k < 80; k++) {
+    p.push({ x: Math.random() * c.width, y: -20 - Math.random() * 220, vx: Math.random() * 3 - 1.5, vy: Math.random() * 3 + 2, c: col(), r: Math.random() * 6, w: 7, h: 10, g: .02 });
+  }
+
+  let n = 0;
+  (function f() {
+    if (t !== CFT) return;
+    x.clearRect(0, 0, c.width, c.height);
+    p.forEach(q => {
+      q.vy += q.g;
+      q.x += q.vx;
+      q.y += q.vy;
+      q.vx *= .992;
+      q.r += .15;
+      x.save();
+      x.translate(q.x, q.y);
+      x.rotate(q.r);
+      x.fillStyle = q.c;
+      x.fillRect(-q.w / 2, -q.h / 2, q.w, q.h);
+      x.restore();
+    });
+    if (++n < 230) requestAnimationFrame(f);
+    else x.clearRect(0, 0, c.width, c.height);
+  })();
+}
 
 /* ---------- Lesson content (10 lessons; quiz questions are added below) ---------- */
 
-const L=[
-{t:'What is phishing?',e:'🎣',i:'Phishing is a fake message pretending to be someone you trust, meant to get you to click, log in, or pay. It arrives by email, text (smishing), phone (vishing), or is aimed at you personally (spear phishing).',d:['Check the real sender address','Hover over links before clicking','Open the site yourself instead of using the link'],n:['Trust a message just because it looks official','Reply to unexpected requests'],q:[['A text says your package is held and asks for a $1.99 fee via a link. This is…',['Smishing','Spear phishing','A normal delivery notice'],0,'Phishing by SMS is smishing. The tiny fee is bait to steal your card details.'],['A message mentions your name, employer and a recent project and asks you to open a file. Most likely…',['Spear phishing','Random spam','A system update'],0,'Spear phishing is targeted, using details gathered about you.'],['Best first step with a suspicious "bank" email?',['Click to check','Go to the bank\'s site or app yourself','Forward it to friends'],1,'Going to the real site yourself avoids the attacker\'s link entirely.']]},
-{t:'Spot the fake email',e:'📧',i:'Fake emails slip up in small ways: lookalike sender domains (paypa1.com), urgency, requests for secrets, links that go somewhere else, and attachments with double extensions like invoice.pdf.exe.',d:['Read the domain letter by letter','Report and delete suspicious mail','Confirm requests through another channel'],n:['Open .exe, .zip or double-extension files','Act on a deadline the message invents'],q:[['Which sender is most suspicious?',['support@paypal.com','support@paypa1-secure.com','help@mail.paypal.com'],1,'The "1" replaces an "l" and the extra "-secure" is a classic lookalike trick.'],['Which attachment name is a red flag?',['report.pdf','photo.jpg','invoice.pdf.exe'],2,'The real type is .exe, a program, disguised as a PDF.'],['A link says paypal.com but hovering shows 198.51.100.7. You should…',['Click anyway','Treat it as phishing and report it','Reply asking if it\'s real'],1,'A mismatched destination is one of the strongest signs of phishing.']]},
-{t:'Strong vs. weak passwords',e:'🔑',i:'Length beats complexity. A random passphrase of four or more words is strong and easy to remember. Reusing a password is the biggest risk, because one breach unlocks every account that shares it.',d:['Use a password manager','Make every password unique and 12+ characters','Change passwords after a breach'],n:['Use names, birthdays, or "Password1!"','Reuse passwords across sites'],q:[['Which is strongest?',['P@ssw0rd1!','correct-horse-lantern-biscuit','Summer2024'],1,'Long and random wins. The others follow patterns attackers try first.'],['Why avoid reusing passwords?',['It is slower','One breach exposes every account using it','Sites forbid it'],1,'Attackers try leaked passwords on other sites ("credential stuffing").'],['Best way to keep many unique passwords?',['A notebook by the computer','A password manager','The same one plus a number'],1,'A manager creates and remembers strong passwords for you.']]},
-{t:'Two-factor authentication',e:'📱',i:'2FA adds something you have (a phone app or security key) to something you know (your password), so a stolen password alone is not enough. Authenticator apps and hardware keys beat SMS codes.',d:['Turn it on for email and banking first','Use an authenticator app or key','Save backup codes somewhere safe'],n:['Share codes with anyone','Approve prompts you did not start'],q:[['Which pair is true 2FA?',['Password + security question','Password + authenticator code','Two passwords'],1,'Two different kinds of proof: something you know and something you have.'],['You get login approval prompts you did not start. You…',['Approve one to stop them','Deny them and change your password','Ignore them'],1,'Spamming prompts ("MFA fatigue") hopes you will tap yes. Deny and reset.'],['Someone asks you to read out the code just texted to you. You…',['Read it','Refuse; codes are never shared','Read half of it'],1,'That code is the key to your account. No real company asks for it.']]},
-{t:'Social engineering',e:'🎭',i:'Social engineering manipulates people, not computers. Attackers use authority, urgency, fear and your wish to help: a fake IT agent, a "boss" who needs gift cards, a friend "locked out".',d:['Slow down when something is urgent','Call back on a number you already know','Ask why they need it'],n:['Share passwords, codes or remote access','Skip normal process because someone pushes'],q:[['A caller says they are IT and need your password to fix an issue. You…',['Give it','Hang up and contact IT via a known number','Give it if they know your name'],1,'Real IT never needs your password, and names are easy to find.'],['Which is a pressure tactic?',['Take your time to decide','Do this in 10 minutes or lose access','Contact us any time'],1,'Artificial deadlines stop you from thinking.'],['Your "boss" emails urgently asking for gift cards. First step?',['Buy them','Verify by phone or in person','Reply with the codes'],1,'Checking through a second channel defeats most impersonation.']]},
-{t:'Safe social media habits',e:'💬',i:'Public posts are searchable. Scammers use them to guess security answers, notice when you are away, and clone your profile to trick your friends.',d:['Set accounts to private','Post trips after you return','Turn off location tags'],n:['Post boarding passes or IDs','Accept requests from strangers','Play "pet + street" name quizzes'],q:[['Why are "first pet + street" quizzes risky?',['They are slow','They collect common security-question answers','They cost money'],1,'Pet, street and school are classic security answers. Treat them like passwords.'],['When should you post vacation photos?',['Live, with location tags','After you are home','Only to strangers'],1,'Posting later avoids telling everyone your home is empty.'],['A friend\'s account DMs you urgently for money. You…',['Send it','Call them on a known number first','Send half'],1,'Hijacked or cloned accounts are a common route for fraud.']]},
-{t:'Public Wi-Fi dangers',e:'📶',i:'Open Wi-Fi can be watched, and "evil twin" hotspots copy a real network name to capture your logins. When in doubt, use your phone\'s data.',d:['Ask staff for the exact network name','Use mobile data or a trusted VPN','Turn off auto-join and file sharing'],n:['Bank or shop on open Wi-Fi','Sign in to main accounts through pop-up portals'],q:[['You see "CafeWiFi" and "CafeWiFi_Free". You…',['Join the free one','Ask staff for the exact name','Join both'],1,'Lookalike names are how evil twins trick people.'],['Safest way to check your bank away from home?',['Café Wi-Fi','Mobile data','Hotel lobby Wi-Fi'],1,'Mobile data is not shared with strangers on the same network.'],['Which setting helps?',['Auto-join open networks','Turn off auto-join and file sharing','Share your hotspot password'],1,'Your device will not quietly connect to a fake network.']]},
-{t:'Recognizing scams',e:'🕵️',i:'Most scams share a shape: an unexpected offer or threat, pressure to act fast, and unusual payment (gift cards, wires, crypto). Real prizes and jobs never charge fees upfront.',d:['Pause and talk to someone you trust','Search the offer plus "scam"','Report fraud at reportfraud.ftc.gov'],n:['Pay fees to receive a prize or job','Deposit a check and send money back'],q:[['"You won! Pay $150 to claim $50,000." This is…',['Normal','Advance-fee fraud','A tax rule'],1,'You cannot win a contest you did not enter, and prizes never cost money.'],['A "job" sends a check and asks you to wire back the extra. The check will…',['Be fine','Bounce after you sent real money','Become a bonus'],1,'Banks release funds before a check actually clears.'],['Which payment method do scammers love?',['Credit card','Gift cards','Invoice'],1,'Gift cards are fast, untraceable and hard to reverse.']]},
-{t:'Protecting personal information',e:'🪪',i:'Your name, birth date, SSN and address together can open accounts in your name. Share the minimum and lock down the rest.',d:['Skip optional form fields','Use email aliases and consider a credit freeze','Shred paperwork and lock your phone'],n:['Give your SSN to anyone who contacted you first','Reuse your real details on random sites'],q:[['A site asks for your SSN to download a free PDF. You…',['Provide it','Decline; it is not needed','Type random letters'],1,'Only share what is truly required. Less data means less to leak.'],['Best response after a data breach?',['Ignore it','Change passwords and consider a credit freeze','Delete your email'],1,'Changing passwords and freezing credit blocks most follow-up harm.'],['Optional form fields: you…',['Fill them all','Skip them or use an alias','Use your main email'],1,'Data minimization is your best everyday habit.']]},
-{t:'Malware & ransomware',e:'🧱',i:'Malware is software that harms or spies on you. Ransomware locks your files and demands payment. It spreads through attachments, fake downloads, and out-of-date software.',d:['Install updates promptly','Download only from official stores','Keep offline backups'],n:['Open unexpected attachments','Use cracked or pirated software','Pay a ransom without expert advice'],q:[['Best defense against ransomware?',['Pay quickly','Offline backups and updates','A bigger monitor'],1,'With a backup you can restore your files without paying anyone.'],['A free "cracked" game installer from a forum is…',['Safe','A common way to spread malware','Fine if zipped'],1,'Pirated installers are a favorite hiding place for malware.'],['A popup shouts "VIRUS! Call this number". You…',['Call','Close the tab and never call','Download its cleaner'],1,'Legit security tools never show a phone number in a popup.']]}];
+const L = [
+  {
+    t: 'What is phishing?', e: '🎣',
+    i: 'Phishing is a fake message pretending to be someone you trust, meant to get you to click, log in, or pay. It arrives by email, text (smishing), phone (vishing), or is aimed at you personally (spear phishing).',
+    d: ['Check the real sender address', 'Hover over links before clicking', 'Open the site yourself instead of using the link'],
+    n: ['Trust a message just because it looks official', 'Reply to unexpected requests'],
+    q: [
+      ['A text says your package is held and asks for a $1.99 fee via a link. This is…', ['Smishing', 'Spear phishing', 'A normal delivery notice'], 0, 'Phishing by SMS is smishing. The tiny fee is bait to steal your card details.'],
+      ['A message mentions your name, employer and a recent project and asks you to open a file. Most likely…', ['Spear phishing', 'Random spam', 'A system update'], 0, 'Spear phishing is targeted, using details gathered about you.'],
+      ['Best first step with a suspicious "bank" email?', ['Click to check', "Go to the bank's site or app yourself", 'Forward it to friends'], 1, "Going to the real site yourself avoids the attacker's link entirely."]
+    ]
+  },
+  {
+    t: 'Spot the fake email', e: '📧',
+    i: 'Fake emails slip up in small ways: lookalike sender domains (paypa1.com), urgency, requests for secrets, links that go somewhere else, and attachments with double extensions like invoice.pdf.exe.',
+    d: ['Read the domain letter by letter', 'Report and delete suspicious mail', 'Confirm requests through another channel'],
+    n: ['Open .exe, .zip or double-extension files', 'Act on a deadline the message invents'],
+    q: [
+      ['Which sender is most suspicious?', ['support@paypal.com', 'support@paypa1-secure.com', 'help@mail.paypal.com'], 1, 'The "1" replaces an "l" and the extra "-secure" is a classic lookalike trick.'],
+      ['Which attachment name is a red flag?', ['report.pdf', 'photo.jpg', 'invoice.pdf.exe'], 2, 'The real type is .exe, a program, disguised as a PDF.'],
+      ['A link says paypal.com but hovering shows 198.51.100.7. You should…', ['Click anyway', 'Treat it as phishing and report it', "Reply asking if it's real"], 1, 'A mismatched destination is one of the strongest signs of phishing.']
+    ]
+  },
+  {
+    t: 'Strong vs. weak passwords', e: '🔑',
+    i: 'Length beats complexity. A random passphrase of four or more words is strong and easy to remember. Reusing a password is the biggest risk, because one breach unlocks every account that shares it.',
+    d: ['Use a password manager', 'Make every password unique and 12+ characters', 'Change passwords after a breach'],
+    n: ['Use names, birthdays, or "Password1!"', 'Reuse passwords across sites'],
+    q: [
+      ['Which is strongest?', ['P@ssw0rd1!', 'correct-horse-lantern-biscuit', 'Summer2024'], 1, 'Long and random wins. The others follow patterns attackers try first.'],
+      ['Why avoid reusing passwords?', ['It is slower', 'One breach exposes every account using it', 'Sites forbid it'], 1, 'Attackers try leaked passwords on other sites ("credential stuffing").'],
+      ['Best way to keep many unique passwords?', ['A notebook by the computer', 'A password manager', 'The same one plus a number'], 1, 'A manager creates and remembers strong passwords for you.']
+    ]
+  },
+  {
+    t: 'Two-factor authentication', e: '📱',
+    i: '2FA adds something you have (a phone app or security key) to something you know (your password), so a stolen password alone is not enough. Authenticator apps and hardware keys beat SMS codes.',
+    d: ['Turn it on for email and banking first', 'Use an authenticator app or key', 'Save backup codes somewhere safe'],
+    n: ['Share codes with anyone', 'Approve prompts you did not start'],
+    q: [
+      ['Which pair is true 2FA?', ['Password + security question', 'Password + authenticator code', 'Two passwords'], 1, 'Two different kinds of proof: something you know and something you have.'],
+      ['You get login approval prompts you did not start. You…', ['Approve one to stop them', 'Deny them and change your password', 'Ignore them'], 1, 'Spamming prompts ("MFA fatigue") hopes you will tap yes. Deny and reset.'],
+      ['Someone asks you to read out the code just texted to you. You…', ['Read it', 'Refuse; codes are never shared', 'Read half of it'], 1, 'That code is the key to your account. No real company asks for it.']
+    ]
+  },
+  {
+    t: 'Social engineering', e: '🎭',
+    i: 'Social engineering manipulates people, not computers. Attackers use authority, urgency, fear and your wish to help: a fake IT agent, a "boss" who needs gift cards, a friend "locked out".',
+    d: ['Slow down when something is urgent', 'Call back on a number you already know', 'Ask why they need it'],
+    n: ['Share passwords, codes or remote access', 'Skip normal process because someone pushes'],
+    q: [
+      ['A caller says they are IT and need your password to fix an issue. You…', ['Give it', 'Hang up and contact IT via a known number', 'Give it if they know your name'], 1, 'Real IT never needs your password, and names are easy to find.'],
+      ['Which is a pressure tactic?', ['Take your time to decide', 'Do this in 10 minutes or lose access', 'Contact us any time'], 1, 'Artificial deadlines stop you from thinking.'],
+      ['Your "boss" emails urgently asking for gift cards. First step?', ['Buy them', 'Verify by phone or in person', 'Reply with the codes'], 1, 'Checking through a second channel defeats most impersonation.']
+    ]
+  },
+  {
+    t: 'Safe social media habits', e: '💬',
+    i: 'Public posts are searchable. Scammers use them to guess security answers, notice when you are away, and clone your profile to trick your friends.',
+    d: ['Set accounts to private', 'Post trips after you return', 'Turn off location tags'],
+    n: ['Post boarding passes or IDs', 'Accept requests from strangers', 'Play "pet + street" name quizzes'],
+    q: [
+      ['Why are "first pet + street" quizzes risky?', ['They are slow', 'They collect common security-question answers', 'They cost money'], 1, 'Pet, street and school are classic security answers. Treat them like passwords.'],
+      ['When should you post vacation photos?', ['Live, with location tags', 'After you are home', 'Only to strangers'], 1, 'Posting later avoids telling everyone your home is empty.'],
+      ["A friend's account DMs you urgently for money. You…", ['Send it', 'Call them on a known number first', 'Send half'], 1, 'Hijacked or cloned accounts are a common route for fraud.']
+    ]
+  },
+  {
+    t: 'Public Wi-Fi dangers', e: '📶',
+    i: 'Open Wi-Fi can be watched, and "evil twin" hotspots copy a real network name to capture your logins. When in doubt, use your phone\'s data.',
+    d: ['Ask staff for the exact network name', 'Use mobile data or a trusted VPN', 'Turn off auto-join and file sharing'],
+    n: ['Bank or shop on open Wi-Fi', 'Sign in to main accounts through pop-up portals'],
+    q: [
+      ['You see "CafeWiFi" and "CafeWiFi_Free". You…', ['Join the free one', 'Ask staff for the exact name', 'Join both'], 1, 'Lookalike names are how evil twins trick people.'],
+      ['Safest way to check your bank away from home?', ['Café Wi-Fi', 'Mobile data', 'Hotel lobby Wi-Fi'], 1, 'Mobile data is not shared with strangers on the same network.'],
+      ['Which setting helps?', ['Auto-join open networks', 'Turn off auto-join and file sharing', 'Share your hotspot password'], 1, 'Your device will not quietly connect to a fake network.']
+    ]
+  },
+  {
+    t: 'Recognizing scams', e: '🕵️',
+    i: 'Most scams share a shape: an unexpected offer or threat, pressure to act fast, and unusual payment (gift cards, wires, crypto). Real prizes and jobs never charge fees upfront.',
+    d: ['Pause and talk to someone you trust', 'Search the offer plus "scam"', 'Report fraud at reportfraud.ftc.gov'],
+    n: ['Pay fees to receive a prize or job', 'Deposit a check and send money back'],
+    q: [
+      ['"You won! Pay $150 to claim $50,000." This is…', ['Normal', 'Advance-fee fraud', 'A tax rule'], 1, 'You cannot win a contest you did not enter, and prizes never cost money.'],
+      ['A "job" sends a check and asks you to wire back the extra. The check will…', ['Be fine', 'Bounce after you sent real money', 'Become a bonus'], 1, 'Banks release funds before a check actually clears.'],
+      ['Which payment method do scammers love?', ['Credit card', 'Gift cards', 'Invoice'], 1, 'Gift cards are fast, untraceable and hard to reverse.']
+    ]
+  },
+  {
+    t: 'Protecting personal information', e: '🪪',
+    i: 'Your name, birth date, SSN and address together can open accounts in your name. Share the minimum and lock down the rest.',
+    d: ['Skip optional form fields', 'Use email aliases and consider a credit freeze', 'Shred paperwork and lock your phone'],
+    n: ['Give your SSN to anyone who contacted you first', 'Reuse your real details on random sites'],
+    q: [
+      ['A site asks for your SSN to download a free PDF. You…', ['Provide it', 'Decline; it is not needed', 'Type random letters'], 1, 'Only share what is truly required. Less data means less to leak.'],
+      ['Best response after a data breach?', ['Ignore it', 'Change passwords and consider a credit freeze', 'Delete your email'], 1, 'Changing passwords and freezing credit blocks most follow-up harm.'],
+      ['Optional form fields: you…', ['Fill them all', 'Skip them or use an alias', 'Use your main email'], 1, 'Data minimization is your best everyday habit.']
+    ]
+  },
+  {
+    t: 'Malware & ransomware', e: '🧱',
+    i: 'Malware is software that harms or spies on you. Ransomware locks your files and demands payment. It spreads through attachments, fake downloads, and out-of-date software.',
+    d: ['Install updates promptly', 'Download only from official stores', 'Keep offline backups'],
+    n: ['Open unexpected attachments', 'Use cracked or pirated software', 'Pay a ransom without expert advice'],
+    q: [
+      ['Best defense against ransomware?', ['Pay quickly', 'Offline backups and updates', 'A bigger monitor'], 1, 'With a backup you can restore your files without paying anyone.'],
+      ['A free "cracked" game installer from a forum is…', ['Safe', 'A common way to spread malware', 'Fine if zipped'], 1, 'Pirated installers are a favorite hiding place for malware.'],
+      ['A popup shouts "VIRUS! Call this number". You…', ['Call', 'Close the tab and never call', 'Download its cleaner'], 1, 'Legit security tools never show a phone number in a popup.']
+    ]
+  }
+];
 
 /* ---------- Progress, account bar and the roadmap dashboard ---------- */
 
-const prog=()=>(users()[me]||{}).p10||{},best=()=>(users()[me]||{}).ex??-1,passed=i=>(prog()[i]??-1)>=6,nDone=()=>L.filter((_,i)=>passed(i)).length;
+const prog = () => (users()[me] || {}).p10 || {};
+const best = () => (users()[me] || {}).ex ?? -1;
+const passed = i => (prog()[i] ?? -1) >= 6;
+const nDone = () => L.filter((_, i) => passed(i)).length;
 
-const badge=n=>n>=10?'🏆 Cyber Master':n>=6?'🎯 Scam Sniper':n>=3?'🛡️ Phish Defender':'🌱 Getting started';
+const badge = n => n >= 10 ? '🏆 Cyber Master' : n >= 6 ? '🎯 Scam Sniper' : n >= 3 ? '🛡️ Phish Defender' : '🌱 Getting started';
 
-function saveScore(i,s){const a=users(),u=a[me];u.p10=u.p10||{};u.p10[i]=Math.max(u.p10[i]??-1,s);save(a)}
+function saveScore(i, s) {
+  const a = users(), u = a[me];
+  u.p10 = u.p10 || {};
+  u.p10[i] = Math.max(u.p10[i] ?? -1, s);
+  save(a);
+}
 
-function saveExam(s){const a=users();a[me].ex=Math.max(a[me].ex??-1,s);save(a)}
+function saveExam(s) {
+  const a = users();
+  a[me].ex = Math.max(a[me].ex ?? -1, s);
+  save(a);
+}
 
-function closeMenu(){const m=$('#umenu');if(m){m.hidden=true;const b=$('#um');if(b)b.setAttribute('aria-expanded','false')}}
+function closeMenu() {
+  const m = $('#umenu');
+  if (m) {
+    m.hidden = true;
+    const b = $('#um');
+    if (b) b.setAttribute('aria-expanded', 'false');
+  }
+}
 
-addEventListener('click',e=>{if(!e.target.closest||!e.target.closest('.uw'))closeMenu()});addEventListener('keydown',e=>{if(e.key==='Escape')closeMenu()});
+addEventListener('click', e => { if (!e.target.closest || !e.target.closest('.uw')) closeMenu(); });
+addEventListener('keydown', e => { if (e.key === 'Escape') closeMenu(); });
 
-function topbar(){const ini=esc((me||'?')[0].toUpperCase());
- $('#top').innerHTML=`<span class="uw"><button class="usr" id="um" aria-haspopup="true" aria-expanded="false" aria-label="Account menu for ${esc(me)}"><span class="uav">${ini}</span><span class="un">${esc(me)}</span><span aria-hidden="true">▾</span></button><div class="umenu" id="umenu" hidden></div></span><button id="mu" aria-pressed="${muted}" aria-label="Toggle sound">${muted?'🔇':'🔊'}</button>`;
- $('#mu').onclick=()=>{muted=!muted;st.set('sts-mute',muted);topbar()};
- $('#um').onclick=e=>{e.stopPropagation();const m=$('#umenu');if(!m.hidden){closeMenu();return}const n=nDone();
-  m.innerHTML=`<div class="uh"><span class="uav big">${ini}</span><div><b>${esc(me)}</b><br><span class="mute">${badge(n)}</span></div></div><p class="mute" style="margin:10px 0">Lessons passed: <b>${n}/10</b><br>Final exam best: <b>${best()>=0?best()+'/20':'not taken yet'}</b></p><button id="ud" style="width:100%;margin:4px 0">🏠 Dashboard</button><button id="uo" style="width:100%">Sign out</button>`;
-  m.hidden=false;$('#um').setAttribute('aria-expanded','true');$('#ud').onclick=()=>{closeMenu();home()};$('#uo').onclick=()=>out('You have signed out. See you soon!')}}
+function topbar() {
+  const ini = esc((me || '?')[0].toUpperCase());
+  $('#top').innerHTML = `<span class="uw"><button class="usr" id="um" aria-haspopup="true" aria-expanded="false" aria-label="Account menu for ${esc(me)}"><span class="uav">${ini}</span><span class="un">${esc(me)}</span><span aria-hidden="true">▾</span></button><div class="umenu" id="umenu" hidden></div></span><button id="mu" aria-pressed="${muted}" aria-label="Toggle sound">${muted ? '🔇' : '🔊'}</button>`;
+  $('#mu').onclick = () => { muted = !muted; st.set('sts-mute', muted); topbar(); };
+  $('#um').onclick = e => {
+    e.stopPropagation();
+    const m = $('#umenu');
+    if (!m.hidden) { closeMenu(); return; }
+    const n = nDone();
+    m.innerHTML = `<div class="uh"><span class="uav big">${ini}</span><div><b>${esc(me)}</b><br><span class="mute">${badge(n)}</span></div></div><p class="mute" style="margin:10px 0">Lessons passed: <b>${n}/10</b><br>Final exam best: <b>${best() >= 0 ? best() + '/20' : 'not taken yet'}</b></p><button id="ud" style="width:100%;margin:4px 0">🏠 Dashboard</button><button id="uo" style="width:100%">Sign out</button>`;
+    m.hidden = false;
+    $('#um').setAttribute('aria-expanded', 'true');
+    $('#ud').onclick = () => { closeMenu(); home(); };
+    $('#uo').onclick = () => out('You have signed out. See you soon!');
+  };
+}
 
-const SHORT=['Phishing','Fake emails','Passwords','2FA','Social eng.','Social media','Public Wi-Fi','Scams','Personal info','Malware','Final exam'];
+const SHORT = ['Phishing', 'Fake emails', 'Passwords', '2FA', 'Social eng.', 'Social media', 'Public Wi-Fi', 'Scams', 'Personal info', 'Malware', 'Final exam'];
 
-/* Road geometry: a wide layout for laptops and a taller one for phones. Rows run left to right,
-   then right to left, joined by U-turns. Coordinates are SVG units; the viewBox starts at -OX. */
-const mapGeom=wide=>{const o=wide?{MW:900,OX:0,GAP:140,Y0:90,pad:80,xL:120,xR:780,sx:60,ex:300,park:68,rows:[[220,450,680],[680,450,220],[220,450,680],[650,300]]}:{MW:440,OX:30,GAP:110,Y0:75,pad:68,xL:65,xR:315,sx:30,ex:145,park:54,rows:[[95,190,285],[285,190,95],[95,190,285],[265,145]]};o.R=o.GAP/2;o.MH=o.Y0+o.GAP*3+o.pad;o.pts=o.rows.flatMap((r,i)=>r.map(x=>({x,y:o.Y0+o.GAP*i})));return o};
-let mapWide=false,rzT;
-addEventListener('resize',()=>{clearTimeout(rzT);rzT=setTimeout(()=>{if($('#map')&&(innerWidth>=760)!==mapWide)home()},250)});
+// Roadmap geometry definitions for responsive layouts
+const mapGeom = wide => {
+  const o = wide 
+    ? { MW: 900, OX: 0, GAP: 140, Y0: 90, pad: 80, xL: 120, xR: 780, sx: 60, ex: 300, park: 68, rows: [[220, 450, 680], [680, 450, 220], [220, 450, 680], [650, 300]] } 
+    : { MW: 440, OX: 30, GAP: 110, Y0: 75, pad: 68, xL: 65, xR: 315, sx: 30, ex: 145, park: 54, rows: [[95, 190, 285], [285, 190, 95], [95, 190, 285], [265, 145]] };
+  o.R = o.GAP / 2;
+  o.MH = o.Y0 + o.GAP * 3 + o.pad;
+  o.pts = o.rows.flatMap((r, i) => r.map(x => ({ x, y: o.Y0 + o.GAP * i })));
+  return o;
+};
 
-const CARSVG='<svg viewBox="0 0 30 52" width="22" height="38"><rect x="4" y="2" width="22" height="48" rx="9" fill="#E64833" stroke="#874F41" stroke-width="2"/><rect x="8" y="11" width="14" height="10" rx="3" fill="#bfe3ff"/><rect x="8" y="23" width="14" height="9" rx="2" fill="#c33a27"/><rect x="8" y="34" width="14" height="7" rx="3" fill="#bfe3ff"/><rect x="0" y="9" width="4" height="10" rx="2" fill="#222"/><rect x="26" y="9" width="4" height="10" rx="2" fill="#222"/><rect x="0" y="34" width="4" height="10" rx="2" fill="#222"/><rect x="26" y="34" width="4" height="10" rx="2" fill="#222"/><circle cx="10" cy="4" r="2" fill="#ffe9a0"/><circle cx="20" cy="4" r="2" fill="#ffe9a0"/></svg>';
+let mapWide = false, rzT;
+addEventListener('resize', () => { clearTimeout(rzT); rzT = setTimeout(() => { if ($('#map') && (innerWidth >= 760) !== mapWide) home(); }, 250); });
 
-function sheet(inner,wire){const old=document.activeElement,m=document.createElement('div');m.className='mdl';m.innerHTML=`<div role="dialog" aria-modal="true">${inner}</div>`;document.body.append(m);
- const c=()=>{m.remove();removeEventListener('keydown',k);if(old&&old.focus)old.focus()},k=e=>{if(e.key==='Escape')c()};addEventListener('keydown',k);m.onclick=e=>{if(e.target===m)c()};wire(c,m);const f=m.querySelector('button');if(f)f.focus()}
+const CARSVG = '<svg viewBox="0 0 30 52" width="22" height="38"><rect x="4" y="2" width="22" height="48" rx="9" fill="#E64833" stroke="#874F41" stroke-width="2"/><rect x="8" y="11" width="14" height="10" rx="3" fill="#bfe3ff"/><rect x="8" y="23" width="14" height="9" rx="2" fill="#c33a27"/><rect x="8" y="34" width="14" height="7" rx="3" fill="#bfe3ff"/><rect x="0" y="9" width="4" height="10" rx="2" fill="#222"/><rect x="26" y="9" width="4" height="10" rx="2" fill="#222"/><rect x="0" y="34" width="4" height="10" rx="2" fill="#222"/><rect x="26" y="34" width="4" height="10" rx="2" fill="#222"/><circle cx="10" cy="4" r="2" fill="#ffe9a0"/><circle cx="20" cy="4" r="2" fill="#ffe9a0"/></svg>';
 
-function stopSheet(k){const n=nDone(),p=prog();
- if(k===10){if(n<10)return showLock('Final exam is locked',`Pass all 10 lessons first. You have passed <b>${n}/10</b> so far.`);return sheet(`<div class="em">🏆</div><h3>Final exam</h3><p>20 fresh questions from every lesson.${best()>=0?` Your best: <b>${best()}/20</b>.`:''}</p><button class="pri" id="sa">${best()>=0?'Retake the exam':'Start the exam'}</button> <button id="sc">Close</button>`,c=>{$('#sa').onclick=()=>{c();examStart()};$('#sc').onclick=c})}
- if(k>0&&!passed(k-1))return lockMsg(k);
- const l=L[k],s=p[k]??-1;
- sheet(`<div class="em">${l.e}</div><h3>Lesson ${k+1}: ${l.t}</h3><p class="mute">${s>=6?`✔ Passed · best ${s}/10`:s>=0?`Best ${s}/10 · need 6 to pass`:'Ready to start'}</p><button class="pri" id="sa">${s>=0?'Open the lesson':'Start the lesson'}</button> ${s>=6?'<button id="sq">🔁 Retake quiz only</button> ':''}<button id="sc">Close</button>`,c=>{$('#sa').onclick=()=>{c();lesson(k)};if($('#sq'))$('#sq').onclick=()=>{c();lq(k)};$('#sc').onclick=c})}
+function sheet(inner, wire) {
+  const old = document.activeElement, m = document.createElement('div');
+  m.className = 'mdl';
+  m.innerHTML = `<div role="dialog" aria-modal="true">${inner}</div>`;
+  document.body.append(m);
+  const c = () => { m.remove(); removeEventListener('keydown', k); if (old && old.focus) old.focus(); },
+        k = e => { if (e.key === 'Escape') c(); };
+  addEventListener('keydown', k);
+  m.onclick = e => { if (e.target === m) c(); };
+  wire(c, m);
+  const f = m.querySelector('button');
+  if (f) f.focus();
+}
 
-function toast(t){const e=document.createElement('div');e.className='toast';e.textContent=t;document.body.append(e);setTimeout(()=>e.remove(),2800)}
+function stopSheet(k) {
+  const n = nDone(), p = prog();
+  if (k === 10) {
+    if (n < 10) return showLock('Final exam is locked', `Pass all 10 lessons first. You have passed <b>${n}/10</b> so far.`);
+    return sheet(`<div class="em">🏆</div><h3>Final exam</h3><p>20 fresh questions from every lesson.${best() >= 0 ? ` Your best: <b>${best()}/20</b>.` : ''}</p><button class="pri" id="sa">${best() >= 0 ? 'Retake the exam' : 'Start the exam'}</button> <button id="sc">Close</button>`, c => { $('#sa').onclick = () => { c(); examStart(); }; $('#sc').onclick = c; });
+  }
+  if (k > 0 && !passed(k - 1)) return lockMsg(k);
+  const l = L[k], s = p[k] ?? -1;
+  sheet(`<div class="em">${l.e}</div><h3>Lesson ${k + 1}: ${l.t}</h3><p class="mute">${s >= 6 ? `✔ Passed · best ${s}/10` : s >= 0 ? `Best ${s}/10 · need 6 to pass` : 'Ready to start'}</p><button class="pri" id="sa">${s >= 0 ? 'Open the lesson' : 'Start the lesson'}</button> ${s >= 6 ? '<button id="sq">🔁 Retake quiz only</button> ' : ''}<button id="sc">Close</button>`, c => { $('#sa').onclick = () => { c(); lesson(k); }; if ($('#sq')) $('#sq').onclick = () => { c(); lq(k); }; $('#sc').onclick = c; });
+}
 
-function home(){topbar();const p=prog(),n=nDone(),tgt=n===10?10:Math.max(0,L.findIndex((_,i)=>!passed(i)));
- const key='sts-car-'+me;let prev=st.get(key,null);if(prev===null||prev>tgt||prev<0)prev=tgt;const anim=prev<tgt&&!matchMedia('(prefers-reduced-motion:reduce)').matches;
- const state=k=>k===10?(n===10?'cur':'lock'):(passed(k)?'done':(k>0&&!passed(k-1))?'lock':'cur');
- const geo=mapGeom(mapWide=innerWidth>=760),{MW,OX,MH,GAP,R,Y0}=geo;
- const nodes=geo.pts.map((pt,k)=>{let cls=state(k);if(anim&&k===tgt)cls='lock';const ic=k===10?(cls==='lock'?'🔒':'🏆'):cls==='done'?'✔':cls==='lock'?'🔒':L[k].e;
-  return `<div class="mn" style="left:${(pt.x+OX)/MW*100}%;top:${pt.y/MH*100}%"><button class="mnode ${cls}" data-k="${k}" aria-label="${k===10?'Final exam':`Lesson ${k+1}: ${esc(L[k].t)}`}, ${cls==='done'?'passed':cls==='lock'?'locked':'available'}">${ic}${k<10?`<span class="nnum">${k+1}</span>`:''}</button><div class="nlab">${SHORT[k]}</div></div>`}).join('');
- const yy=i=>Y0+GAP*i,d=`M${geo.sx} ${yy(0)} L${geo.xR} ${yy(0)} A${R} ${R} 0 0 1 ${geo.xR} ${yy(1)} L${geo.xL} ${yy(1)} A${R} ${R} 0 0 0 ${geo.xL} ${yy(2)} L${geo.xR} ${yy(2)} A${R} ${R} 0 0 1 ${geo.xR} ${yy(3)} L${geo.ex} ${yy(3)}`;
- $('#app').innerHTML=`<div class="card"><div class="dm">${MAS('sm')}<div class="bub3" id="mb">Hi, I’m Shieldy! Tap me 👋</div></div><h2>Your road to scam-proof</h2><p class="mute">Tap a stop to open its lesson. Pass its quiz (6 out of 10) and the car drives on and unlocks the next stop. The final exam waits at the end.</p>
- <div class="bar" role="progressbar" aria-valuenow="${n}" aria-valuemin="0" aria-valuemax="10"><i style="width:${n*10}%"></i></div><p><b>${n}/10 lessons passed</b> <span class="badge">${badge(n)}</span></p></div>
- <div class="map${mapWide?' wide':''}" id="map" style="aspect-ratio:${MW}/${MH}"><svg class="roadsvg" viewBox="${-OX} 0 ${MW} ${MH}" aria-hidden="true"><path class="rbed" d="${d}"/><path class="rtop" id="rp" d="${d}"/><path class="rgreen" id="rg" d="${d}"/><path class="rdash" d="${d}"/></svg>${nodes}<div class="car2" id="car">${CARSVG}</div></div>`;
- document.querySelectorAll('.mnode').forEach(b=>b.onclick=()=>stopSheet(+b.dataset.k));mascotInit(false,true);
- const rp=$('#rp'),rg=$('#rg'),car=$('#car'),tot=rp.getTotalLength(),LN=geo.pts.map(pt=>{let best=0,bd=1e9;for(let l=0;l<=tot;l+=3){const q=rp.getPointAtLength(l),dd=(q.x-pt.x)**2+(q.y-pt.y)**2;if(dd<bd){bd=dd;best=l}}return best});
- const park=k=>Math.max(0,LN[k]-geo.park),place=l=>{const q=rp.getPointAtLength(l),a=rp.getPointAtLength(Math.max(0,l-3)),b=rp.getPointAtLength(Math.min(tot,l+3));car.style.left=(q.x+OX)/MW*100+'%';car.style.top=q.y/MH*100+'%';car.style.transform=`translate(-50%,-50%) rotate(${Math.atan2(b.y-a.y,b.x-a.x)*180/Math.PI+90}deg)`;rg.style.strokeDasharray=`${l} ${tot+20}`};
- const unlock=k=>{const b=document.querySelector(`.mnode[data-k="${k}"]`);if(!b)return;b.classList.add('shake');tone(330,.1);setTimeout(()=>{b.classList.remove('lock','shake');b.classList.add('cur','pop');b.firstChild.textContent=k===10?'🏆':L[k].e;[523,659,784,1047].forEach((f,i)=>tone(f,.15,i*.09));const w=b.parentNode;for(let i=0;i<12;i++){const s=document.createElement('span'),a=i/12*6.283;s.className='spk';s.textContent=i%2?'✨':'⭐';s.style.setProperty('--dx',Math.cos(a)*46+'px');s.style.setProperty('--dy',Math.sin(a)*46+'px');w.append(s);setTimeout(()=>s.remove(),1000)}toast(k===10?'🏆 Final exam unlocked!':`🔓 Lesson ${k+1} unlocked: ${L[k].t}`)},520)};
- place(park(prev));if(prev>0||anim)car.scrollIntoView({block:'center'});
- if(!anim){st.set(key,tgt);if(tgt>0)setTimeout(()=>car.scrollIntoView({block:'center',behavior:'smooth'}),100);return}
- const a=park(prev),b=park(tgt),ms=Math.min(4600,1000+(b-a)*3.2);
- setTimeout(()=>{tone(150,.3);tone(210,.35,.25);const t0=performance.now(),ease=t=>t<.5?2*t*t:1-Math.pow(-2*t+2,2)/2;
-  (function f(now){const t=Math.min(1,(now-t0)/ms);place(a+(b-a)*ease(t));const r=car.getBoundingClientRect();scrollBy(0,(r.top-innerHeight*.5)*.1);if(t<1)requestAnimationFrame(f);else{st.set(key,tgt);unlock(tgt);const pd=document.querySelector(`.mnode[data-k="${prev}"]`);if(pd)pd.classList.add('pop')}})(t0)},900)}
+function toast(t) {
+  const e = document.createElement('div');
+  e.className = 'toast';
+  e.textContent = t;
+  document.body.append(e);
+  setTimeout(() => e.remove(), 2800);
+}
+
+function home() {
+  topbar();
+  const p = prog(), n = nDone(), tgt = n === 10 ? 10 : Math.max(0, L.findIndex((_, i) => !passed(i)));
+  const key = 'sts-car-' + me;
+  let prev = st.get(key, null);
+  if (prev === null || prev > tgt || prev < 0) prev = tgt;
+  const anim = prev < tgt && !matchMedia('(prefers-reduced-motion:reduce)').matches;
+  const state = k => k === 10 ? (n === 10 ? 'cur' : 'lock') : (passed(k) ? 'done' : (k > 0 && !passed(k - 1)) ? 'lock' : 'cur');
+  const geo = mapGeom(mapWide = innerWidth >= 760), { MW, OX, MH, GAP, R, Y0 } = geo;
+  const nodes = geo.pts.map((pt, k) => {
+    let cls = state(k);
+    if (anim && k === tgt) cls = 'lock';
+    const ic = k === 10 ? (cls === 'lock' ? '🔒' : '🏆') : cls === 'done' ? '✔' : cls === 'lock' ? '🔒' : L[k].e;
+    return `<div class="mn" style="left:${(pt.x + OX) / MW * 100}%;top:${pt.y / MH * 100}%"><button class="mnode ${cls}" data-k="${k}" aria-label="${k === 10 ? 'Final exam' : `Lesson ${k + 1}: ${esc(L[k].t)}`}, ${cls === 'done' ? 'passed' : cls === 'lock' ? 'locked' : 'available'}">${ic}${k < 10 ? `<span class="nnum">${k + 1}</span>` : ''}</button><div class="nlab">${SHORT[k]}</div></div>`;
+  }).join('');
+  const yy = i => Y0 + GAP * i, d = `M${geo.sx} ${yy(0)} L${geo.xR} ${yy(0)} A${R} ${R} 0 0 1 ${geo.xR} ${yy(1)} L${geo.xL} ${yy(1)} A${R} ${R} 0 0 0 ${geo.xL} ${yy(2)} L${geo.xR} ${yy(2)} A${R} ${R} 0 0 1 ${geo.xR} ${yy(3)} L${geo.ex} ${yy(3)}`;
+  $('#app').innerHTML = `<div class="card"><div class="dm">${MAS('sm')}<div class="bub3" id="mb">Hi, I’m Shieldy! Tap me 👋</div></div><h2>Your road to scam-proof</h2><p class="mute">Tap a stop to open its lesson. Pass its quiz (6 out of 10) and the car drives on and unlocks the next stop. The final exam waits at the end.</p><div class="bar" role="progressbar" aria-valuenow="${n}" aria-valuemin="0" aria-valuemax="10"><i style="width:${n * 10}%"></i></div><p><b>${n}/10 lessons passed</b> <span class="badge">${badge(n)}</span></p></div><div class="map${mapWide ? ' wide' : ''}" id="map" style="aspect-ratio:${MW}/${MH}"><svg class="roadsvg" viewBox="${-OX} 0 ${MW} ${MH}" aria-hidden="true"><path class="rbed" d="${d}"/><path class="rtop" id="rp" d="${d}"/><path class="rgreen" id="rg" d="${d}"/><path class="rdash" d="${d}"/></svg>${nodes}<div class="car2" id="car">${CARSVG}</div></div>`;
+  document.querySelectorAll('.mnode').forEach(b => b.onclick = () => stopSheet(+b.dataset.k));
+  mascotInit(false, true);
+  const rp = $('#rp'), rg = $('#rg'), car = $('#car'), tot = rp.getTotalLength(),
+        LN = geo.pts.map(pt => { let best = 0, bd = 1e9; for (let l = 0; l <= tot; l += 3) { const q = rp.getPointAtLength(l), dd = (q.x - pt.x) ** 2 + (q.y - pt.y) ** 2; if (dd < bd) { bd = dd; best = l; } } return best; }),
+        park = k => Math.max(0, LN[k] - geo.park),
+        place = l => {
+          const q = rp.getPointAtLength(l), a = rp.getPointAtLength(Math.max(0, l - 3)), b = rp.getPointAtLength(Math.min(tot, l + 3));
+          car.style.left = (q.x + OX) / MW * 100 + '%';
+          car.style.top = q.y / MH * 100 + '%';
+          car.style.transform = `translate(-50%,-50%) rotate(${Math.atan2(b.y - a.y, b.x - a.x) * 180 / Math.PI + 90}deg)`;
+          rg.style.strokeDasharray = `${l} ${tot + 20}`;
+        },
+        unlock = k => {
+          const b = document.querySelector(`.mnode[data-k="${k}"]`);
+          if (!b) return;
+          b.classList.add('shake');
+          tone(330, .1);
+          setTimeout(() => {
+            b.classList.remove('lock', 'shake');
+            b.classList.add('cur', 'pop');
+            b.firstChild.textContent = k === 10 ? '🏆' : L[k].e;
+            [523, 659, 784, 1047].forEach((f, i) => tone(f, .15, i * .09));
+            const w = b.parentNode;
+            for (let i = 0; i < 12; i++) {
+              const s = document.createElement('span'), a = i / 12 * 6.283;
+              s.className = 'spk';
+              s.textContent = i % 2 ? '✨' : '⭐';
+              s.style.setProperty('--dx', Math.cos(a) * 46 + 'px');
+              s.style.setProperty('--dy', Math.sin(a) * 46 + 'px');
+              w.append(s);
+              setTimeout(() => s.remove(), 1000);
+            }
+            toast(k === 10 ? '🏆 Final exam unlocked!' : `🔓 Lesson ${k + 1} unlocked: ${L[k].t}`);
+          }, 520);
+        };
+  place(park(prev));
+  if (prev > 0 || anim) car.scrollIntoView({ block: 'center' });
+  if (!anim) {
+    st.set(key, tgt);
+    if (tgt > 0) setTimeout(() => car.scrollIntoView({ block: 'center', behavior: 'smooth' }), 100);
+    return;
+  }
+  const a = park(prev), b = park(tgt), ms = Math.min(4600, 1000 + (b - a) * 3.2);
+  setTimeout(() => {
+    tone(150, .3);
+    tone(210, .35, .25);
+    const t0 = performance.now(), ease = t => t < .5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+    (function f(now) {
+      const t = Math.min(1, (now - t0) / ms);
+      place(a + (b - a) * ease(t));
+      const r = car.getBoundingClientRect();
+      scrollBy(0, (r.top - innerHeight * .5) * .1);
+      if (t < 1) requestAnimationFrame(f);
+      else { st.set(key, tgt); unlock(tgt); const pd = document.querySelector(`.mnode[data-k="${prev}"]`); if (pd) pd.classList.add('pop'); }
+    })(t0);
+  }, 900);
+}
 
 let S;
 
 /* ---------- Lesson page, quiz engine and final exam ---------- */
 
-const cmpHtml=c=>`<h3>👀 Spot the differences</h3><div class="cmp"><div><h3 class="do">${(c.lb||['✅ The real thing'])[0]}</h3>${c.r}</div><div><h3 class="dont">${(c.lb||[0,'🚩 The fake'])[1]}</h3>${c.f}</div></div><div class="ip" id="cn">Hover over the highlighted parts on BOTH sides to see why the real one is real and why the fake one is fake.</div><p><b>Key differences to remember:</b></p><ol class="nl">${c.n.map(x=>`<li>${x}</li>`).join('')}</ol>`;
+const cmpHtml = c => `<h3>👀 Spot the differences</h3><div class="cmp"><div><h3 class="do">${(c.lb || ['✅ The real thing'])[0]}</h3>${c.r}</div><div><h3 class="dont">${(c.lb || [0, '🚩 The fake'])[1]}</h3>${c.f}</div></div><div class="ip" id="cn">Hover over the highlighted parts on BOTH sides to see why the real one is real and why the fake one is fake.</div><p><b>Key differences to remember:</b></p><ol class="nl">${c.n.map(x => `<li>${x}</li>`).join('')}</ol>`;
 
-function lesson(i){if(i>0&&!passed(i-1)){lockMsg(i);return}S={i};const l=L[i];
- $('#app').innerHTML=`<button id="bk">← All lessons</button><div class="card" style="margin-top:12px"><div class="em">${l.e}</div><h2>Lesson ${i+1}: ${l.t}</h2><p>${l.i}</p>${l.sp?`<h3>🔍 Your spot check: ask these 4 questions</h3><ol class="nl">${l.sp.map(x=>`<li>${x}</li>`).join('')}</ol>`:''}${l.c?cmpHtml(l.c):''}${l.k?`<h3>📚 Key facts to remember (your quiz covers these)</h3><ul class="kf">${l.k.map(x=>`<li>${x}</li>`).join('')}</ul>`:''}
- <div class="two"><div><h3 class="do">✔ Do</h3><ul>${l.d.map(x=>`<li>${x}</li>`).join('')}</ul></div><div><h3 class="dont">✖ Don't</h3><ul>${l.n.map(x=>`<li>${x}</li>`).join('')}</ul></div></div>
- <button class="pri" id="go">Next: inspect real-looking examples</button>${passed(i)?' <button id="sq">🔁 Skip to the quiz (already passed)</button>':''}</div>`;
- $('#bk').onclick=home;$('#go').onclick=()=>explore(i);if($('#sq'))$('#sq').onclick=()=>lq(i);scrollTo(0,0);const W=(L[i].c&&L[i].c.w)||['real','fake'];document.querySelectorAll('.cmp .hs').forEach(b=>{const f=()=>{const g=b.dataset.g==='1';$('#cn').className='ip '+(g?'okp':'badp');$('#cn').innerHTML=`<b>${g?`✅ Why this is ${W[0]}:`:`🚩 Why this is ${W[1]}:`}</b> ${b.dataset.w}`};b.addEventListener('pointerenter',f);b.addEventListener('focus',f);b.addEventListener('click',f);b.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();f()}})})}
+function lesson(i) {
+  if (i > 0 && !passed(i - 1)) { lockMsg(i); return; }
+  S = { i };
+  const l = L[i];
+  $('#app').innerHTML = `<button id="bk">← All lessons</button><div class="card" style="margin-top:12px"><div class="em">${l.e}</div><h2>Lesson ${i + 1}: ${l.t}</h2><p>${l.i}</p>${l.sp ? `<h3>🔍 Your spot check: ask these 4 questions</h3><ol class="nl">${l.sp.map(x => `<li>${x}</li>`).join('')}</ol>` : ''}${l.c ? cmpHtml(l.c) : ''}${l.k ? `<h3>📚 Key facts to remember (your quiz covers these)</h3><ul class="kf">${l.k.map(x => `<li>${x}</li>`).join('')}</ul>` : ''}<div class="two"><div><h3 class="do">✔ Do</h3><ul>${l.d.map(x => `<li>${x}</li>`).join('')}</ul></div><div><h3 class="dont">✖ Don't</h3><ul>${l.n.map(x => `<li>${x}</li>`).join('')}</ul></div></div><button class="pri" id="go">Next: inspect real-looking examples</button>${passed(i) ? ' <button id="sq">🔁 Skip to the quiz (already passed)</button>' : ''}</div>`;
+  $('#bk').onclick = home;
+  $('#go').onclick = () => explore(i);
+  if ($('#sq')) $('#sq').onclick = () => lq(i);
+  scrollTo(0, 0);
+  const W = (L[i].c && L[i].c.w) || ['real', 'fake'];
+  document.querySelectorAll('.cmp .hs').forEach(b => {
+    const f = () => {
+      const g = b.dataset.g === '1';
+      $('#cn').className = 'ip ' + (g ? 'okp' : 'badp');
+      $('#cn').innerHTML = `<b>${g ? `✅ Why this is ${W[0]}:` : `🚩 Why this is ${W[1]}:`}</b> ${b.dataset.w}`;
+    };
+    b.addEventListener('pointerenter', f);
+    b.addEventListener('focus', f);
+    b.addEventListener('click', f);
+    b.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); f(); } });
+  });
+}
 
-function runQuiz(qs,m){S={i:m.i,qs,qi:0,ok:0,miss:{},m};askQ()}
+function runQuiz(qs, m) { S = { i: m.i, qs, qi: 0, ok: 0, miss: {}, m }; askQ(); }
 
-const lq=i=>runQuiz(buildQuiz(i),{i,title:L[i].t,fin:lessonDone});
+const lq = i => runQuiz(buildQuiz(i), { i, title: L[i].t, fin: lessonDone });
 
-function askQ(){const {q,i}=S.qs[S.qi];if(!Array.isArray(q))return q.t==='rf'?askRF(q,i):askMT(q,i);S.o=sh(q[1].map((t,k)=>[t,k===q[2]]));
- $('#app').innerHTML=`<div class="card"><p class="mute">${S.m.title} · Question ${S.qi+1} of ${S.qs.length}</p><div class="bar" style="margin-bottom:14px"><i style="width:${S.qi/S.qs.length*100}%"></i></div><h2>${q[0]}</h2><div>${S.o.map((o,k)=>`<button class="opt" data-k="${k}">${o[0]}</button>`).join('')}</div><div id="fb" aria-live="polite"></div></div>`;scrollTo(0,0);
- document.querySelectorAll('.opt').forEach(b=>b.onclick=()=>{const g=S.o[+b.dataset.k][1];if(g)S.ok++;else S.miss[i]=(S.miss[i]||0)+1;g?ok():no();
-  document.querySelectorAll('.opt').forEach((x,k)=>{x.disabled=true;if(S.o[k][1])x.classList.add('right')});if(!g)b.classList.add('wrong');
-  $('#fb').innerHTML=`<div class="fb"><b>${g?'Nice one! ':'Not quite. '}</b>${q[3]}</div><button class="pri" id="nx">${S.qi<S.qs.length-1?'Next question':'See results'}</button>`;
-  $('#nx').focus();$('#nx').onclick=()=>{S.qi++;S.qi<S.qs.length?askQ():S.m.fin()}})}
+function askQ() {
+  const { q, i } = S.qs[S.qi];
+  if (!Array.isArray(q)) return q.t === 'rf' ? askRF(q, i) : askMT(q, i);
+  S.o = sh(q[1].map((t, k) => [t, k === q[2]]));
+  $('#app').innerHTML = `<div class="card"><p class="mute">${S.m.title} · Question ${S.qi + 1} of ${S.qs.length}</p><div class="bar" style="margin-bottom:14px"><i style="width:${S.qi / S.qs.length * 100}%"></i></div><h2>${q[0]}</h2><div>${S.o.map((o, k) => `<button class="opt" data-k="${k}">${o[0]}</button>`).join('')}</div><div id="fb" aria-live="polite"></div></div>`;
+  scrollTo(0, 0);
+  document.querySelectorAll('.opt').forEach(b => b.onclick = () => {
+    const g = S.o[+b.dataset.k][1];
+    if (g) S.ok++; else S.miss[i] = (S.miss[i] || 0) + 1;
+    g ? ok() : no();
+    document.querySelectorAll('.opt').forEach((x, k) => { x.disabled = true; if (S.o[k][1]) x.classList.add('right'); });
+    if (!g) b.classList.add('wrong');
+    $('#fb').innerHTML = `<div class="fb"><b>${g ? 'Nice one! ' : 'Not quite. '}</b>${q[3]}</div><button class="pri" id="nx">${S.qi < S.qs.length - 1 ? 'Next question' : 'See results'}</button>`;
+    $('#nx').focus();
+    $('#nx').onclick = () => { S.qi++; S.qi < S.qs.length ? askQ() : S.m.fin(); };
+  });
+}
 
-function lessonDone(){const s=S.ok,i=S.i,before=nDone(),pass=s>=6,prev=prog()[i]??-1,keep=prev>=6;saveScore(i,s);const now=nDone();if(pass){ok();tone(1047,.2,.2)}else no();
- $('#app').innerHTML=`<div class="card ${pass?'vr':'vf'}">${MAS('in')}<div class="bub3" id="mb">${pass?'You did it! 🎉':'Almost there! You’ve got this 💪'}</div><h2>You scored ${s}/10</h2><p>${pass?`Congratulations! You passed Lesson ${i+1}: ${L[i].t}.`:keep?`This attempt didn’t reach 6, but you already passed this lesson (best ${prev}/10), so it stays unlocked.`:'You need 6 out of 10 to move on. Review the lesson and try again.'}</p>
- ${pass&&[3,6,10].includes(now)&&now>before?`<p><span class="badge">New badge: ${badge(now)}</span></p>`:''}${now===10&&before<10?'<p><b>🎓 Every lesson passed. The final exam is unlocked!</b></p>':''}
- ${pass||keep?(i<9?'<button class="pri" id="nl">Continue to next lesson</button> ':'<button class="pri" id="ex">Continue to the final exam</button> ')+'<button id="rt">Retake the quiz</button> ':'<button class="pri" id="rt">Retry quiz</button> <button id="rd">Review the lesson</button> '}<button id="hm">All lessons</button></div>`;
- $('#hm').onclick=home;if($('#nl'))$('#nl').onclick=()=>lesson(i+1);if($('#ex'))$('#ex').onclick=examStart;if($('#rt'))$('#rt').onclick=()=>lq(i);if($('#rd'))$('#rd').onclick=()=>lesson(i);mascotInit(pass)}
+function lessonDone() {
+  const s = S.ok, i = S.i, before = nDone(), pass = s >= 6, prev = prog()[i] ?? -1, keep = prev >= 6;
+  saveScore(i, s);
+  const now = nDone();
+  if (pass) { ok(); tone(1047, .2, .2); } else no();
+  $('#app').innerHTML = `<div class="card ${pass ? 'vr' : 'vf'}">${MAS('in')}<div class="bub3" id="mb">${pass ? 'You did it! 🎉' : 'Almost there! You’ve got this 💪'}</div><h2>You scored ${s}/10</h2><p>${pass ? `Congratulations! You passed Lesson ${i + 1}: ${L[i].t}.` : keep ? `This attempt didn’t reach 6, but you already passed this lesson (best ${prev}/10), so it stays unlocked.` : 'You need 6 out of 10 to move on. Review the lesson and try again.'}</p>${pass && [3, 6, 10].includes(now) && now > before ? `<p><span class="badge">New badge: ${badge(now)}</span></p>` : ''}${now === 10 && before < 10 ? '<p><b>🎓 Every lesson passed. The final exam is unlocked!</b></p>': ''}${pass || keep ? (i < 9 ? '<button class="pri" id="nl">Continue to next lesson</button> ' : '<button class="pri" id="ex">Continue to the final exam</button> ') + '<button id="rt">Retake the quiz</button> ' : '<button class="pri" id="rt">Retry quiz</button> <button id="rd">Review the lesson</button> '}<button id="hm">All lessons</button></div>`;
+  $('#hm').onclick = home;
+  if ($('#nl')) $('#nl').onclick = () => lesson(i + 1);
+  if ($('#ex')) $('#ex').onclick = examStart;
+  if ($('#rt')) $('#rt').onclick = () => lq(i);
+  if ($('#rd')) $('#rd').onclick = () => lesson(i);
+  mascotInit(pass);
+}
 
-function examStart(){if(nDone()<10){showLock('Final exam is locked',`Pass all 10 lessons first. You have passed <b>${nDone()}/10</b> so far.`);return}runQuiz(buildExam(),{i:null,title:'Final exam',fin:examDone})}
+function examStart() {
+  if (nDone() < 10) { showLock('Final exam is locked', `Pass all 10 lessons first. You have passed <b>${nDone()}/10</b> so far.`); return; }
+  runQuiz(buildExam(), { i: null, title: 'Final exam', fin: examDone });
+}
 
-function examDone(){const s=S.ok;saveExam(s);const lv=s>=18?'🏆 Cyber Master':s>=14?'🎯 Scam Sniper':s>=10?'🛡️ Phish Defender':'🌱 Keep practicing';const w=Object.keys(S.miss).sort((a,b)=>S.miss[b]-S.miss[a]);
- $('#app').innerHTML=`<div class="card">${MAS('in')}<div class="bub3" id="mb">${s>=12?'Exam passed! 🎓':'Good effort! Review and try again 💪'}</div><h2>Final exam: ${s}/20</h2><p><span class="badge">${lv}</span></p><p>${s>=18?'Outstanding. You can spot nearly every trick.':s>=14?'Strong knowledge. A little polish on a few topics will make you scam-proof.':s>=10?'Solid base, but some gaps remain. Review the topics below.':'Time for a refresher. Revisit the lessons below and try again.'}</p>
- ${w.length?`<h3>Topics to review</h3>${w.map(i=>`<p>${L[i].e} <b>${L[i].t}</b> (${S.miss[i]} missed) <button data-r="${i}">Review</button></p>`).join('')}`:'<p><b>No misses. Perfect!</b></p>'}<button class="pri" id="rt">Retake the exam</button> <button id="hm">All lessons</button></div>`;
- $('#hm').onclick=home;$('#rt').onclick=examStart;document.querySelectorAll('[data-r]').forEach(b=>b.onclick=()=>lesson(+b.dataset.r));mascotInit(s>=12)}
+function examDone() {
+  const s = S.ok;
+  saveExam(s);
+  const lv = s >= 18 ? '🏆 Cyber Master' : s >= 14 ? '🎯 Scam Sniper' : s >= 10 ? '🛡️ Phish Defender' : '🌱 Keep practicing',
+        w = Object.keys(S.miss).sort((a, b) => S.miss[b] - S.miss[a]);
+  $('#app').innerHTML = `<div class="card">${MAS('in')}<div class="bub3" id="mb">${s >= 12 ? 'Exam passed! 🎓' : 'Good effort! Review and try again 💪'}</div><h2>Final exam: ${s}/20</h2><p><span class="badge">${lv}</span></p><p>${s >= 18 ? 'Outstanding. You can spot nearly every trick.' : s >= 14 ? 'Strong knowledge. A little polish on a few topics will make you scam-proof.' : s >= 10 ? 'Solid base, but some gaps remain. Review the topics below.' : 'Time for a refresher. Revisit the lessons below and try again.'}</p>${w.length ? `<h3>Topics to review</h3>${w.map(i => `<p>${L[i].e} <b>${L[i].t}</b> (${S.miss[i]} missed) <button data-r="${i}">Review</button></p>`).join('')}` : '<p><b>No misses. Perfect!</b></p>'}<button class="pri" id="rt">Retake the exam</button> <button id="hm">All lessons</button></div>`;
+  $('#hm').onclick = home;
+  $('#rt').onclick = examStart;
+  document.querySelectorAll('[data-r]').forEach(b => b.onclick = () => lesson(+b.dataset.r));
+  mascotInit(s >= 12);
+}
 
 /* ---------- Multiple-choice question banks ---------- */
 
-const QX=[
-[['Which describes vishing?',['Phishing by phone call','Phishing by email','Phishing on websites'],0,'Vishing means voice phishing.'],['Phishing messages usually try to make you feel…',['Calm and curious','Rushed or afraid','Bored'],1,'Urgency and fear shut down careful thinking.'],['Which is safest to do with an unexpected bank message?',['Use the link in it','Open the bank app yourself','Forward it to friends'],1,'Never use links from an unexpected message.'],['“Dear customer” instead of your name suggests…',['A mass-mailed message','A personal note','A bank upgrade'],0,'Though some phishing is personalized, generic greetings are a hint.'],['You clicked a phishing link but typed nothing. Next?',['Nothing, you are fine','Close it, run a scan, watch your accounts','Enter fake info'],1,'Some pages install malware. Scan and monitor.'],['Who can be impersonated in phishing?',['Banks only','Anyone: friends, bosses, delivery firms, governments','Only strangers'],1,'Attackers copy any trusted name.'],['Where should you report a phishing email?',['Reply to the sender','Mark it as phishing in your email app','Post the links publicly'],1,'Reporting helps filters block it.']],
-[['A display name says “Apple Support”. What should you check?',['The logo','The actual email address','The font'],1,'Display names are easy to fake.'],['Which domain really belongs to Amazon?',['amazon.com','amazon.com.account-help.net','amaz0n.com'],0,'Read from the right: the name before the final dot is the real owner.'],['An email “from your bank” has spelling mistakes and comes from a free webmail address. Most likely…',['Genuine','Phishing','A newsletter'],1,'Banks proofread and use their own domain. Typos and free-mail senders are red flags.'],['On a computer, how can you preview a link’s destination?',['Hover over it','Click it quickly','Zoom in'],0,'On phones, press and hold the link.'],['Which attachment is riskiest?',['Menu.pdf','Photo.png','Update.exe'],2,'.exe files run programs.'],['An email shows an invoice for something you never bought. You…',['Open it','Delete it or check with the company’s official site','Reply to cancel'],1,'Fake invoices push you to open malware.'],['When is a “password” email expected?',['After you requested a reset','When asked to confirm your password','When asked to type your old password'],0,'Reset emails you requested are normal.']],
-[['Which is the best length goal?',['6 characters','12 or more','8 with a symbol'],1,'Length multiplies attacker effort.'],['Sticky notes with passwords beside your screen are…',['Fine','A bad idea; use a manager','Fine if abbreviated'],1,'Visible notes are easy to copy.'],['Your password manager vault needs…',['A strong unique master password plus 2FA','Your birthday','No password'],0,'Protect the vault with your best password.'],['Security questions are best answered with…',['True answers','Random answers stored in your manager','Your pet’s name'],1,'True answers can be found online.'],['A site you use was breached. First step?',['Wait and see','Change that password and any reused ones','Delete your account'],1,'Reused passwords spread the damage.'],['Which is weakest?',['T7!vQ#9z','blue-train-ocean-lamp','12345678'],2,'Sequences are guessed first.'],['Should you share a password with a coworker?',['Yes to be efficient','No; use sharing features in a manager','Only by text'],1,'Shared secrets can’t be audited.']],
-[['Which is the strongest second factor?',['SMS code','Hardware security key','Email code'],1,'Keys resist phishing.'],['What are backup codes for?',['Posting online','Recovering your account if you lose your phone','Sharing with support'],1,'Store them safely offline.'],['2FA stops all phishing.',['True','False; you can be tricked into giving codes','True with SMS'],1,'Never share codes.'],['Where should you enable 2FA first?',['Your email account','A game forum','A coupon site'],0,'Email resets every other account.'],['SIM swapping targets which factor?',['SMS codes','Authenticator apps','Hardware keys'],0,'Attackers move your number to their SIM.'],['A login code arrives that you didn’t request. It means…',['Someone has your password and tried to sign in','Nothing','A prize'],0,'Change your password right away.'],['“Something you are” refers to…',['A password','A fingerprint or face scan','A phone'],1,'Biometrics are the third factor type.']],
-[['“Pretexting” means…',['Sending malware','Inventing a believable story to get information','Guessing passwords'],1,'The story is the weapon.'],['A stranger follows you through a secure door. You…',['Hold it open','Ask them to badge in or call security','Ignore it'],1,'Politely enforce access rules.'],['A USB stick lies in the parking lot. You…',['Plug it in to find the owner','Hand it to IT unplugged','Take it home'],1,'Dropped drives often hold malware.'],['Which emotion do attackers NOT usually exploit?',['Fear','Curiosity','Skepticism'],2,'Skepticism protects you.'],['A survey caller asks for your mother’s maiden name. You…',['Answer','Decline; it’s a security answer','Give a hint'],1,'Don’t reveal security answers.'],['Safest habit for urgent requests?',['Comply quickly','Pause and verify through a separate channel','Ask a coworker to approve'],1,'Verification beats speed.'],['After an attempt, you should tell…',['No one','Your IT or security team','The attacker'],1,'Reports protect others.']],
-[['Which privacy setting is best?',['Public profile','Friends only, with reviewed tags','Anyone can message'],1,'Limit who sees your posts.'],['A new friend request from someone you already know. You…',['Accept','Check with the real person first','Ignore forever'],1,'It may be a clone.'],['A photo with a visible house number can…',['Reveal where you live','Be harmless','Improve security'],0,'Background details add up.'],['A DM from “Support”: “Verify your page or lose it!” You…',['Follow the link','Ignore and report','Reply with your login'],1,'Platforms don’t DM threats.'],['Safest to post publicly?',['Your phone number','A landscape photo','Your driver’s license'],1,'Keep ID and contact data private.'],['Old posts can…',['Be forgotten','Still reveal info; review and delete','Never be searched'],1,'Audit your history.'],['Links in social media ads can lead to…',['Always safe pages','Scam shops and phishing','Only news'],1,'Check the domain first.']],
-[['A VPN helps because it…',['Makes you anonymous','Encrypts your traffic on the network','Blocks all viruses'],1,'It protects the path, not your device.'],['The HTTPS padlock means…',['The site is trustworthy','The connection is encrypted','Entering data is safe'],1,'Scam sites can have padlocks too.'],['Which task is okay on public Wi-Fi?',['Banking','Reading news','Entering a card number'],1,'Browse non-sensitive pages only.'],['“Auto-connect to open networks” should be…',['On','Off','Always on in cafés'],1,'It joins fake hotspots silently.'],['A password-protected personal hotspot is…',['Usually safer than open Wi-Fi','Always unsafe','Public'],0,'Use a strong hotspot password.'],['When you finish with café Wi-Fi…',['Stay connected','Forget the network','Share it'],1,'It prevents auto-reconnects.'],['A portal wants your email and password for free Wi-Fi. You…',['Use your main password','Skip it or use a throwaway email','Enter your bank password'],1,'Never use real credentials.']],
-[['A “tech support” caller says your PC is infected. Truth?',['They’re scammers','They’re helpful','They’re your ISP'],0,'Legit firms don’t cold-call about viruses.'],['Romance scams often ask for…',['Gift cards or wires for emergencies','A coffee date','Your favorite movie'],0,'Money requests from online love are a red flag.'],['“Guaranteed 20% weekly returns” is…',['Realistic','Too good to be true','Government-backed'],1,'Guaranteed high returns are fraud.'],['Which payment is hardest to reverse?',['Credit card','Wire or crypto','Card dispute'],1,'Scammers prefer irreversible payments.'],['A “grandchild in jail” calls for bail money. You…',['Send it fast','Hang up and call the family member directly','Ask for a code word later'],1,'Verify before sending a cent.'],['Where can you report a scam in the U.S.?',['reportfraud.ftc.gov','Social media','A forum'],0,'FTC reports help investigators.'],['If you already paid a scammer, first…',['Stay silent','Contact your bank and report immediately','Pay more to get it back'],1,'Speed gives the best chance of recovery.']],
-[['Which is safest on a public profile?',['Birth year and town','Your general interests','Your home address'],1,'Interests don’t unlock accounts.'],['A credit freeze…',['Blocks new credit accounts in your name','Cancels cards','Raises your score'],0,'It is free and reversible.'],['Before recycling an old phone you should…',['Just toss it','Back it up and factory-reset it','Remove the case'],1,'Wiping prevents data recovery.'],['Shredding is best for…',['Junk mail with account info','Magazines','Pizza menus'],0,'Paper with account data can be misused.'],['Email aliases help by…',['Hiding your main address from sites','Speeding delivery','Encrypting messages'],0,'You can disable a leaked alias.'],['“We’re updating records. Confirm your SSN.” You…',['Confirm','Contact the organization via official channels','Send half'],1,'Never give it out on a cold contact.'],['Should a flashlight app need your contacts?',['Yes','No; deny unneeded permissions','Only on Sundays'],1,'Grant the minimum.']],
-[['Updates matter because they…',['Fix security holes attackers use','Change the screen color','Save battery color'],0,'Updates patch vulnerabilities.'],['Which backup rule is best?',['One copy on the same computer','3 copies, 2 media types, 1 offline','No backups'],1,'This is the 3-2-1 rule.'],['An app unexpectedly asks for admin rights. You…',['Allow','Deny and investigate','Allow once'],1,'Unexpected prompts mean trouble.'],['A sign of malware is…',['Unexplained slowness or popups','A fresh battery','Longer screen time'],0,'Also strange accounts or settings.'],['Antivirus software…',['Is useless','Helps but doesn’t replace caution','Makes you immune'],1,'Layers beat a single tool.'],['Browser extensions should be…',['Installed freely','Limited to trusted ones you need','Always hidden'],1,'Extensions can read your pages.'],['If you suspect malware, first…',['Keep using it','Disconnect from the network and scan','Share files with friends'],1,'Contain it first.']]];
+const QX = [
+  [
+    ['Which describes vishing?', ['Phishing by phone call', 'Phishing by email', 'Phishing on websites'], 0, 'Vishing means voice phishing.'],
+    ['Phishing messages usually try to make you feel…', ['Calm and curious', 'Rushed or afraid', 'Bored'], 1, 'Urgency and fear shut down careful thinking.'],
+    ['Which is safest to do with an unexpected bank message?', ['Use the link in it', 'Open the bank app yourself', 'Forward it to friends'], 1, 'Never use links from an unexpected message.'],
+    ['“Dear customer” instead of your name suggests…', ['A mass-mailed message', 'A personal note', 'A bank upgrade'], 0, 'Though some phishing is personalized, generic greetings are a hint.'],
+    ['You clicked a phishing link but typed nothing. Next?', ['Nothing, you are fine', 'Close it, run a scan, watch your accounts', 'Enter fake info'], 1, 'Some pages install malware. Scan and monitor.'],
+    ['Who can be impersonated in phishing?', ['Banks only', 'Anyone: friends, bosses, delivery firms, governments', 'Only strangers'], 1, 'Attackers copy any trusted name.'],
+    ['Where should you report a phishing email?', ['Reply to the sender', 'Mark it as phishing in your email app', 'Post the links publicly'], 1, 'Reporting helps filters block it.']
+  ],
+  [
+    ['A display name says “Apple Support”. What should you check?', ['The logo', 'The actual email address', 'The font'], 1, 'Display names are easy to fake.'],
+    ['Which domain really belongs to Amazon?', ['amazon.com', 'amazon.com.account-help.net', 'amaz0n.com'], 0, 'Read from the right: the name before the final dot is the real owner.'],
+    ['An email “from your bank” has spelling mistakes and comes from a free webmail address. Most likely…', ['Genuine', 'Phishing', 'A newsletter'], 1, 'Banks proofread and use their own domain. Typos and free-mail senders are red flags.'],
+    ['On a computer, how can you preview a link’s destination?', ['Hover over it', 'Click it quickly', 'Zoom in'], 0, 'On phones, press and hold the link.'],
+    ['Which attachment is riskiest?', ['Menu.pdf', 'Photo.png', 'Update.exe'], 2, '.exe files run programs.'],
+    ['An email shows an invoice for something you never bought. You…', ['Open it', 'Delete it or check with the company’s official site', 'Reply to cancel'], 1, 'Fake invoices push you to open malware.'],
+    ['When is a “password” email expected?', ['After you requested a reset', 'When asked to confirm your password', 'When asked to type your old password'], 0, 'Reset emails you requested are normal.']
+  ],
+  [
+    ['Which is the best length goal?', ['6 characters', '12 or more', '8 with a symbol'], 1, 'Length multiplies attacker effort.'],
+    ['Sticky notes with passwords beside your screen are…', ['Fine', 'A bad idea; use a manager', 'Fine if abbreviated'], 1, 'Visible notes are easy to copy.'],
+    ['Your password manager vault needs…', ['A strong unique master password plus 2FA', 'Your birthday', 'No password'], 0, 'Protect the vault with your best password.'],
+    ['Security questions are best answered with…', ['True answers', 'Random answers stored in your manager', 'Your pet’s name'], 1, 'True answers can be found online.'],
+    ['A site you use was breached. First step?', ['Wait and see', 'Change that password and any reused ones', 'Delete your account'], 1, 'Reused passwords spread the damage.'],
+    ['Which is weakest?', ['T7!vQ#9z', 'blue-train-ocean-lamp', '12345678'], 2, 'Sequences are guessed first.'],
+    ['Should you share a password with a coworker?', ['Yes to be efficient', 'No; use sharing features in a manager', 'Only by text'], 1, 'Shared secrets can’t be audited.']
+  ],
+  [
+    ['Which is the second strongest factor?', ['SMS code', 'Hardware security key', 'Email code'], 1, 'Keys resist phishing.'],
+    ['What are backup codes for?', ['Posting online', 'Recovering your account if you lose your phone', 'Sharing with support'], 1, 'Store them safely offline.'],
+    ['2FA stops all phishing.', ['True', 'False; you can be tricked into giving codes', 'True with SMS'], 1, 'Never share codes.'],
+    ['Where should you enable 2FA first?', ['Your email account', 'A game forum', 'A coupon site'], 0, 'Email resets every other account.'],
+    ['SIM swapping targets which factor?', ['SMS codes', 'Authenticator apps', 'Hardware keys'], 0, 'Attackers move your number to their SIM.'],
+    ['A login code arrives that you didn’t request. It means…', ['Someone has your password and tried to sign in', 'Nothing', 'A prize'], 0, 'Change your password right away.'],
+    ['“Something you are” refers to…', ['A password', 'A fingerprint or face scan', 'A phone'], 1, 'Biometrics are the third factor type.']
+  ],
+  [
+    ['“Pretexting” means…', ['Sending malware', 'Inventing a believable story to get information', 'Guessing passwords'], 1, 'The story is the weapon.'],
+    ['A stranger follows you through a secure door. You…', ['Hold it open', 'Ask them to badge in or call security', 'Ignore it'], 1, 'Politely enforce access rules.'],
+    ['A USB stick lies in the parking lot. You…', ['Plug it in to find the owner', 'Hand it to IT unplugged', 'Take it home'], 1, 'Dropped drives often hold malware.'],
+    ['Which emotion do attackers NOT usually exploit?', ['Fear', 'Curiosity', 'Skepticism'], 2, 'Skepticism protects you.'],
+    ['A survey caller asks for your mother’s maiden name. You…', ['Answer', 'Decline; it’s a security answer', 'Give a hint'], 1, 'Don’t reveal security answers.'],
+    ['Safest habit for urgent requests?', ['Comply quickly', 'Pause and verify through a separate channel', 'Ask a coworker to approve'], 1, 'Verification beats speed.'],
+    ['After an attempt, you should tell…', ['No one', 'Your IT or security team', 'The attacker'], 1, 'Reports protect others.']
+  ],
+  [
+    ['Which privacy setting is best?', ['Public profile', 'Friends only, with reviewed tags', 'Anyone can message'], 1, 'Limit who sees your posts.'],
+    ['A new friend request from someone you already know. You…', ['Accept', 'Check with the real person first', 'Ignore forever'], 1, 'It may be a clone.'],
+    ['A photo with a visible house number can…', ['Reveal where you live', 'Be harmless', 'Improve security'], 0, 'Background details add up.'],
+    ['A DM from “Support”: “Verify your page or lose it!” You…', ['Follow the link', 'Ignore and report', 'Reply with your login'], 1, 'Platforms don’t DM threats.'],
+    ['Safest to post publicly?', ['Your phone number', 'A landscape photo', 'Your driver’s license'], 1, 'Keep ID and contact data private.'],
+    ['Old posts can…', ['Be forgotten', 'Still reveal info; review and delete', 'Never be searched'], 1, 'Audit your history.'],
+    ['Links in social media ads can lead to…', ['Always safe pages', 'Scam shops and phishing', 'Only news'], 1, 'Check the domain first.']
+  ],
+  [
+    ['A VPN helps because it…', ['Makes you anonymous', 'Encrypts your traffic on the network', 'Blocks all viruses'], 1, 'It protects the path, not your device.'],
+    ['The HTTPS padlock means…', ['The site is trustworthy', 'The connection is encrypted', 'Entering data is safe'], 1, 'Scam sites can have padlocks too.'],
+    ['Which task is okay on public Wi-Fi?', ['Banking', 'Reading news', 'Entering a card number'], 1, 'Browse non-sensitive pages only.'],
+    ['“Auto-connect to open networks” should be…', ['On', 'Off', 'Always on in cafés'], 1, 'It joins fake hotspots silently.'],
+    ['A password-protected personal hotspot is…', ['Usually safer than open Wi-Fi', 'Always unsafe', 'Public'], 0, 'Use a strong hotspot password.'],
+    ['When you finish with café Wi-Fi…', ['Stay connected', 'Forget the network', 'Share it'], 1, 'It prevents auto-reconnects.'],
+    ['A portal wants your email and password for free Wi-Fi. You…', ['Use your main password', 'Skip it or use a throwaway email', 'Enter your bank password'], 1, 'Never use real credentials.']
+  ],
+  [
+    ['A “tech support” caller says your PC is infected. Truth?', ['They’re scammers', 'They’re helpful', 'They’re your ISP'], 0, 'Legit firms don’t cold-call about viruses.'],
+    ['Romance scams often ask for…', ['Gift cards or wires for emergencies', 'A coffee date', 'Your favorite movie'], 0, 'Money requests from online love are a red flag.'],
+    ['“Guaranteed 20% weekly returns” is…', ['Realistic', 'Too good to be true', 'Government-backed'], 1, 'Guaranteed high returns are fraud.'],
+    ['Which payment is hardest to reverse?', ['Credit card', 'Wire or crypto', 'Card dispute'], 1, 'Scammers prefer irreversible payments.'],
+    ['A “grandchild in jail” calls for bail money. You…', ['Send it fast', 'Hang up and call the family member directly', 'Ask for a code word later'], 1, 'Verify before sending a cent.'],
+    ['Where can you report a scam in the U.S.?', ['reportfraud.ftc.gov', 'Social media', 'A forum'], 0, 'FTC reports help investigators.'],
+    ['If you already paid a scammer, first…', ['Stay silent', 'Contact your bank and report immediately', 'Pay more to get it back'], 1, 'Speed gives the best chance of recovery.']
+  ],
+  [
+    ['Which is safest on a public profile?', ['Birth year and town', 'Your general interests', 'Your home address'], 1, 'Interests don’t unlock accounts.'],
+    ['A credit freeze…', ['Blocks new credit accounts in your name', 'Cancels cards', 'Raises your score'], 0, 'It is free and reversible.'],
+    ['Before recycling an old phone you should…', ['Just toss it', 'Back it up and factory-reset it', 'Remove the case'], 1, 'Wiping prevents data recovery.'],
+    ['Shredding is best for…', ['Junk mail with account info', 'Magazines', 'Pizza menus'], 0, 'Paper with account data can be misused.'],
+    ['Email aliases help by…', ['Hiding your main address from sites', 'Speeding delivery', 'Encrypting messages'], 0, 'You can disable a leaked alias.'],
+    ['“We’re updating records. Confirm your SSN.” You…', ['Confirm', 'Contact the organization via official channels', 'Send half'], 1, 'Never give it out on a cold contact.'],
+    ['Should a flashlight app need your contacts?', ['Yes', 'No; deny unneeded permissions', 'Only on Sundays'], 1, 'Grant the minimum.']
+  ],
+  [
+    ['Updates matter because they…', ['Fix security holes attackers use', 'Change the screen color', 'Save battery color'], 0, 'Updates patch vulnerabilities.'],
+    ['Which backup rule is best?', ['One copy on the same computer', '3 copies, 2 media types, 1 offline', 'No backups'], 1, 'This is the 3-2-1 rule.'],
+    ['An app unexpectedly asks for admin rights. You…', ['Allow', 'Deny and investigate', 'Allow once'], 1, 'Unexpected prompts mean trouble.'],
+    ['A sign of malware is…', ['Unexplained slowness or popups', 'A fresh battery', 'Longer screen time'], 0, 'Also strange accounts or settings.'],
+    ['Antivirus software…', ['Is useless', 'Helps but doesn’t replace caution', 'Makes you immune'], 1, 'Layers beat a single tool.'],
+    ['Browser extensions should be…', ['Installed freely', 'Limited to trusted ones you need', 'Always hidden'], 1, 'Extensions can read your pages.'],
+    ['If you suspect malware, first…', ['Keep using it', 'Disconnect from the network and scan', 'Share files with friends'], 1, 'Contain it first.']
+  ]
+];
 
-QX.forEach((x,i)=>L[i].q.push(...x));
+QX.forEach((x, i) => L[i].q.push(...x));
 
 /* ---------- Lock window ---------- */
 
-function showLock(t,d){const old=document.activeElement,m=document.createElement('div');m.className='mdl';m.innerHTML=`<div role="dialog" aria-modal="true" aria-labelledby="mt"><div class="em">🔒</div><h3 id="mt">${t}</h3><p>${d}</p><button class="pri" id="mc">Got it</button></div>`;document.body.append(m);
- const c=()=>{m.remove();removeEventListener('keydown',k);old&&old.focus&&old.focus()},k=e=>{if(e.key==='Escape')c()};addEventListener('keydown',k);m.onclick=e=>{if(e.target===m)c()};$('#mc').onclick=c;$('#mc').focus()}
+function showLock(t, d) {
+  const old = document.activeElement, m = document.createElement('div');
+  m.className = 'mdl';
+  m.innerHTML = `<div role="dialog" aria-modal="true" aria-labelledby="mt"><div class="em">🔒</div><h3 id="mt">${t}</h3><p>${d}</p><button class="pri" id="mc">Got it</button></div>`;
+  document.body.append(m);
+  const c = () => { m.remove(); removeEventListener('keydown', k); old && old.focus && old.focus(); },
+        k = e => { if (e.key === 'Escape') c(); };
+  addEventListener('keydown', k);
+  m.onclick = e => { if (e.target === m) c(); };
+  $('#mc').onclick = c;
+  $('#mc').focus();
+}
 
-function lockMsg(i){const k=L.findIndex((_,j)=>j<i&&!passed(j));showLock(`Complete the previous lessons first`,`Finish <b>Lesson ${k+1}: ${L[k].t}</b> by scoring 6 out of 10 or more on its quiz to unlock Lesson ${i+1}.`)}
+function lockMsg(i) {
+  const k = L.findIndex((_, j) => j < i && !passed(j));
+  showLock(`Complete the previous lessons first`, `Finish <b>Lesson ${k + 1}: ${L[k].t}</b> by scoring 6 out of 10 or more on its quiz to unlock Lesson ${i + 1}.`);
+}
 
 /* ---------- Spot checks, key facts and per-lesson labels ---------- */
 
-const SP=[
-['Who is it really from? Check the actual sender address or number, not the display name.','What do they want? Phishing pushes you to click, pay or reveal something.','Is it urgent or scary? Pressure is designed to stop you thinking.','Where does the link really go? Real messages use the company’s own domain.'],
-['Read the domain from the right. The name just before the final dot is the real owner.','Check the greeting. “Dear customer” hints at a mass mailing.','Look at attachments. .exe, .zip and macro files are risky.','Hover over links before clicking. Does the destination match?'],
-['Check the address bar: HTTPS and the exact real domain.','Real sites don’t ask for your PIN alongside your password.','For “password expires” emails, go to the site yourself.','A real code email contains only a code you requested.'],
-['Did you just start this sign-in? If not, deny it.','Check the place, device and time.','Repeated prompts are an attack. Deny them all and reset your password.','No real company asks you to reply with or read out a code.'],
-['Who is asking, and can you verify them another way?','Is there pressure, secrecy or a deadline?','Do they want money, gift cards, passwords or codes?','Does this match how your organization normally works?'],
-['Check the profile’s age: join date, friends and post history.','Does the request match how this friend normally talks?','Be wary of urgent money requests and “verify your page” DMs.','Before posting, ask what a stranger could do with it.'],
-['Did staff confirm the exact network name?','Is it protected by a password you were given?','If a portal wants your email password or login, don’t enter it.','Watch for lookalike duplicates of a network name.'],
-['Did you ask for this offer or prize? Surprises are suspicious.','Does it ask for fees, gift cards, wires or crypto?','Is the deal unrealistically good?','Verify through an independent source before acting.'],
-['Does this form really need that detail? Skip it if not.','Who contacted whom? Never give identifiers to inbound contacts.','Is the domain right (your bank’s real site, .gov)?','Can you verify by calling a number you already trust?'],
-['Does the file come from an official store or site?','Is it an unexpected attachment, especially .exe, .js or .zip?','Real security tools never show a phone number or countdown.','Are your updates and backups current?']];
+const SP = [
+  ['Who is it really from? Check the actual sender address or number, not the display name.', 'What do they want? Phishing pushes you to click, pay or reveal something.', 'Is it urgent or scary? Pressure is designed to stop you thinking.', 'Where does the link really go? Real messages use the company’s own domain.'],
+  ['Read the domain from the right. The name just before the final dot is the real owner.', 'Check the greeting. “Dear customer” hints at a mass mailing.', 'Look at attachments. .exe, .zip and macro files are risky.', 'Hover over links before clicking. Does the destination match?'],
+  ['Check the address bar: HTTPS and the exact real domain.', 'Real sites don’t ask for your PIN alongside your password.', 'For “password expires” emails, go to the site yourself.', 'A real code email contains only a code you requested.'],
+  ['Did you just start this sign-in? If not, deny it.', 'Check the place, device and time.', 'Repeated prompts are an attack. Deny them all and reset your password.', 'No real company asks you to reply with or read out a code.'],
+  ['Who is asking, and can you verify them another way?', 'Is there pressure, secrecy or a deadline?', 'Do they want money, gift cards, passwords or codes?', 'Does this match how your organization normally works?'],
+  ['Check the profile’s age: join date, friends and post history.', 'Does the request match how this friend normally talks?', 'Be wary of urgent money requests and “verify your page” DMs.', 'Before posting, ask what a stranger could do with it.'],
+  ['Did staff confirm the exact network name?', 'Is it protected by a password you were given?', 'If a portal wants your email password or login, don’t enter it.', 'Watch for lookalike duplicates of a network name.'],
+  ['Did you ask for this offer or prize? Surprises are suspicious.', 'Does it ask for fees, gift cards, wires or crypto?', 'Is the deal unrealistically good?', 'Verify through an independent source before acting.'],
+  ['Does this form really need that detail? Skip it if not.', 'Who contacted whom? Never give identifiers to inbound contacts.', 'Is the domain right (your bank’s real site, .gov)?', 'Can you verify by calling a number you already trust?'],
+  ['Does the file come from an official store or site?', 'Is it an unexpected attachment, especially .exe, .js or .zip?', 'Real security tools never show a phone number or countdown.', 'Are your updates and backups current?']
+];
 
-SP.forEach((x,i)=>L[i].sp=x);
+SP.forEach((x, i) => L[i].sp = x);
 
-L[2].sp=['How long is it? Aim for 12 or more characters. Length beats complexity.','Is it random, or built from guessable facts like names, pets, birthdays and years?','Is it unique? Never reuse a password on more than one site.','Where do you keep it? A password manager beats memory, sticky notes or a reused favorite.'];
+L[2].sp = [
+  'How long is it? Aim for 12 or more characters. Length beats complexity.',
+  'Is it random, or built from guessable facts like names, pets, birthdays and years?',
+  'Is it unique? Never reuse a password on more than one site.',
+  'Where do you keep it? A password manager beats memory, sticky notes or a reused favorite.'
+];
 
-L[2].vl=['💪 Verdict: STRONG','⚠️ Verdict: WEAK'];
+L[2].vl = ['💪 Verdict: STRONG', '⚠️ Verdict: WEAK'];
 
-const KF=[
-['Phishing comes in several types: <b>email phishing</b>, <b>smishing</b> (by text message), <b>vishing</b> (by voice phone call) and <b>spear phishing</b> (targeted at you using details like your name, employer or recent projects).','Attackers can impersonate <b>anyone you trust</b>: banks, delivery firms, your boss, friends and government agencies.','They try to make you feel <b>rushed or afraid</b>. A small fee, like $1.99 to “release a parcel”, is bait to steal your card details.','A generic greeting such as “Dear customer” suggests a mass mailing, although spear phishing may use your real name.','Don’t use links in an unexpected message. <b>Open the bank’s app or website yourself</b> to check.','If you clicked a link but typed nothing: close the page, <b>run a security scan</b> and watch your accounts.','<b>Report</b> phishing by marking it as phishing or spam in your email app, then delete it.'],
-['<b>Display names are easy to fake</b>, so always check the actual sender address, such as “Apple Support” coming from a random domain.','<b>Read the domain from the right.</b> The name just before the final dot is the real owner: amazon.com is real, while amazon.com.account-help.net and amaz0n.com are lookalikes. A “1” can replace an “l” (paypa1).','Typos and a free webmail address (like Gmail) on a message “from your bank” are red flags.','<b>Hover over links</b> to preview the destination (press and hold on a phone). If it doesn’t match the text, or shows a bare number like 198.51.100.7, treat it as phishing.','Risky attachments: <b>.exe, .zip, .js and macro files</b>, plus double extensions like invoice.pdf.exe. Unexpected files are risky even when they look like PDFs.','An invoice for something you never bought: <b>delete it</b> or check the company’s official site. Don’t open it or reply.','A “password” email is only expected when <b>you requested a reset</b>. Never confirm or type your password because an email asks.'],
-['<b>Length beats complexity</b>: aim for 12 or more characters. A random passphrase of several unrelated words is strong and memorable.','The weakest passwords follow patterns: <b>sequences like 12345678</b>, common words with a number and symbol (Password1!), or a season plus a year.','<b>Never reuse passwords.</b> When one site is breached, attackers try the same password on other sites (credential stuffing).','Use a <b>password manager</b> to create and remember unique passwords. Protect the vault with a strong master passphrase plus 2FA.','<b>Don’t write passwords on sticky notes</b> by your screen. Anyone nearby can copy them.','<b>Security questions</b>: true answers (pet, school, street) can be found online. Use random made-up answers and store them in your manager.','After a breach: <b>change that password and any other account that reused it</b>.','Never share a password with a coworker. Use the sharing features in a manager instead.'],
-['2FA combines <b>different kinds of proof</b>: something you <b>know</b> (password), something you <b>have</b> (phone app or security key) and something you <b>are</b> (fingerprint or face). A password plus a security question is not true 2FA, because both are things you know.','Strength order: <b>hardware security key</b> (best, resists phishing), then <b>authenticator app</b>, then <b>SMS codes</b>. Attackers can steal SMS codes through <b>SIM swapping</b>, where they move your number to their SIM.','<b>Never share or read out a code</b>. If you get approval prompts you didn’t start, deny them all and change your password. Repeated prompts are an “MFA fatigue” attack.','A login code you didn’t request means <b>someone has your password</b> and tried to sign in. Change the password right away.','<b>Backup codes</b> let you recover your account if you lose your phone. Store them safely offline.','2FA doesn’t stop all phishing. Attackers can still <b>trick you into giving up a code</b>.','Turn on 2FA for your <b>email first</b>, because email can reset every other account.'],
-['Social engineering manipulates <b>people</b>. Attackers exploit <b>fear, curiosity, urgency, authority and the wish to help</b>. They rarely exploit skepticism, which is your best defense.','<b>Pretexting</b> means inventing a believable story (“I’m from IT”) to get information.','Pressure tactics include tight deadlines and secrecy (“don’t tell anyone”), like a “boss” urgently needing gift cards.','<b>Verify through a separate channel</b>: hang up and call back on a number you already know. Real IT never needs your password.','<b>Tailgating</b> is following you through a secure door. Politely ask people to badge in, or call security.','A <b>USB stick you find</b> may hold malware. Don’t plug it in. Hand it to IT.','Don’t give security answers (like your mother’s maiden name) to callers or surveys.','Pause on anything urgent, and <b>report attempts</b> to your IT or security team to protect others.'],
-['<b>“Which pet + which street” quizzes</b> collect common security-question answers, so skip them.','<b>Post trips after you return</b>, because live posts and tags tell people your home is empty.','A friend’s account asking for money: <b>call them on a known number</b>. It may be hijacked.','<b>A friend request from someone you already know</b> may be a clone. Check with the real person.','Platforms don’t DM you threats. A message like “Verify your page or lose it!” from “Support” is a scam: ignore and report it.','Safest privacy setup: <b>friends only</b>, with tags reviewed. Keep your <b>phone number, ID and address</b> private.','Photos can reveal a <b>house number or school uniform</b> in the background.','<b>Old posts</b> can still reveal personal info, so review and delete them. Links in social-media ads can lead to scam shops and phishing, so check the domain first.'],
-['<b>Evil twin</b> networks copy a real name (like “CafeWiFi_Free”). Ask staff for the exact network name.','For banking or shopping away from home, use <b>mobile data</b> instead of public Wi-Fi.','Turn <b>off “auto-join” and file sharing</b>. Auto-connect to open networks lets your device join fake hotspots silently.','A <b>VPN</b> encrypts your traffic on the network. It doesn’t make you anonymous or block viruses.','The <b>HTTPS padlock</b> means the connection is encrypted. It doesn’t prove the site is trustworthy, since scam sites can have padlocks too.','On public Wi-Fi, stick to <b>non-sensitive browsing</b> like reading news. Don’t enter card numbers.','A <b>password-protected personal hotspot</b> is usually safer than open Wi-Fi.','When you’re done, <b>forget the network</b> so it doesn’t auto-reconnect. Never type your real email password into a Wi-Fi sign-in page. Skip it or use a throwaway email.'],
-['Scams share a shape: a surprise offer or threat, <b>pressure to act fast</b> and an unusual payment method.','<b>Advance-fee fraud</b>: real prizes never charge fees, and you can’t win a contest you never entered.','<b>Overpayment scam</b>: they send a check and ask you to wire some back. The check bounces after you’ve sent real money.','Scammers love <b>gift cards, wire transfers and crypto</b>. Wires and crypto are the hardest to reverse. Credit cards offer dispute rights.','<b>“Tech support” callers</b> who say your PC is infected are scammers, because legitimate firms don’t cold-call about viruses.','<b>Romance scams</b> start online and soon ask for money, gift cards or wires for “emergencies”.','“<b>Guaranteed</b> 20% weekly returns” are fraud. No real investment guarantees high returns.','<b>Grandparent scams</b>: hang up and call the relative directly before sending anything.','Report scams at <b>reportfraud.ftc.gov</b> (U.S.). If you already paid, contact your bank immediately, because speed gives the best chance of recovery.'],
-['Never give your <b>SSN</b> for something like a free download. <b>Share the minimum</b> and skip optional form fields.','After a data breach: <b>change passwords and consider a credit freeze</b>.','A <b>credit freeze</b> blocks new credit accounts in your name. It is free and reversible.','Safe to share publicly: general interests. Unsafe: your <b>home address</b>, birth date and phone number.','Before recycling a phone: <b>back it up and factory-reset it</b> so data can’t be recovered.','<b>Shred</b> paper with account details, like junk mail with account numbers, to stop dumpster diving.','<b>Email aliases</b> hide your main address from sites, and you can disable a leaked alias.','If someone says “we’re updating records, confirm your SSN”, <b>contact the organization using official channels</b>.','Apps should only get permissions they need. A flashlight doesn’t need your contacts, so deny it.'],
-['<b>Ransomware</b> locks your files and demands payment. The best defense is <b>offline backups plus updates</b>. Don’t pay without expert advice.','Cracked or pirated installers are a favorite hiding place for malware, so download only from official stores.','A popup with a phone number and a scary message is a <b>scam</b>. A website can’t scan your PC, so close the tab and don’t call.','<b>Updates</b> fix security holes attackers use.','The <b>3-2-1 backup rule</b>: 3 copies, on 2 types of media, with 1 offline.','If an app <b>unexpectedly asks for admin rights</b>, deny it and investigate.','<b>Signs of malware</b>: unexplained slowness, popups, strange accounts or changed settings.','<b>Antivirus helps</b>, but it doesn’t replace caution. Layers beat any single tool.','Install only <b>browser extensions</b> you trust and need, since they can read your pages.','If you suspect malware: <b>disconnect from the network and scan</b>.']];
+const KF = [
+  [
+    'Phishing comes in several types: <b>email phishing</b>, <b>smishing</b> (by text message), <b>vishing</b> (by voice phone call) and <b>spear phishing</b> (targeted at you using details like your name, employer or recent projects).',
+    'Attackers can impersonate <b>anyone you trust</b>: banks, delivery firms, your boss, friends and government agencies.',
+    'They try to make you feel <b>rushed or afraid</b>. A small fee, like $1.99 to “release a parcel”, is bait to steal your card details.',
+    'A generic greeting such as “Dear customer” suggests a mass mailing, although spear phishing may use your real name.',
+    'Don’t use links in an unexpected message. <b>Open the bank’s app or website yourself</b> to check.',
+    'If you clicked a link but typed nothing: close the page, <b>run a security scan</b> and watch your accounts.',
+    '<b>Report</b> phishing by marking it as phishing or spam in your email app, then delete it.'
+  ],
+  [
+    '<b>Display names are easy to fake</b>, so always check the actual sender address, such as “Apple Support” coming from a random domain.',
+    '<b>Read the domain from the right.</b> The name just before the final dot is the real owner: amazon.com is real, while amazon.com.account-help.net and amaz0n.com are lookalikes. A “1” can replace an “l” (paypa1).',
+    'Typos and a free webmail address (like Gmail) on a message “from your bank” are red flags.',
+    '<b>Hover over links</b> to preview the destination (press and hold on a phone). If it doesn’t match the text, or shows a bare number like 198.51.100.7, treat it as phishing.',
+    'Risky attachments: <b>.exe, .zip, .js and macro files</b>, plus double extensions like invoice.pdf.exe. Unexpected files are risky even when they look like PDFs.',
+    'An invoice for something you never bought: <b>delete it</b> or check the company’s official site. Don’t open it or reply.',
+    'A “password” email is only expected when <b>you requested a reset</b>. Never confirm or type your password because an email asks.'
+  ],
+  [
+    '<b>Length beats complexity</b>: aim for 12 or more characters. A random passphrase of several unrelated words is strong and memorable.',
+    'The weakest passwords follow patterns: <b>sequences like 12345678</b>, common words with a number and symbol (Password1!), or a season plus a year.',
+    '<b>Never reuse passwords.</b> When one site is breached, attackers try the same password on other sites (credential stuffing).',
+    'Use a <b>password manager</b> to create and remember unique passwords. Protect the vault with a strong master passphrase plus 2FA.',
+    '<b>Don’t write passwords on sticky notes</b> by your screen. Anyone nearby can copy them.',
+    '<b>Security questions</b>: true answers (pet, school, street) can be found online. Use random made-up answers and store them in your manager.',
+    'After a breach: <b>change that password and any other account that reused it</b>.',
+    'Never share a password with a coworker. Use the sharing features in a manager instead.'
+  ],
+  [
+    '2FA combines <b>different kinds of proof</b>: something you <b>know</b> (password), something you <b>have</b> (phone app or security key) and something you <b>are</b> (fingerprint or face). A password plus a security question is not true 2FA, because both are things you know.',
+    'Strength order: <b>hardware security key</b> (best, resists phishing), then <b>authenticator app</b>, then <b>SMS codes</b>. Attackers can steal SMS codes through <b>SIM swapping</b>, where they move your number to their SIM.',
+    '<b>Never share or read out a code</b>. If you get approval prompts you didn’t start, deny them all and change your password. Repeated prompts are an “MFA fatigue” attack.',
+    'A login code you didn’t request means <b>someone has your password</b> and tried to sign in. Change the password right away.',
+    '<b>Backup codes</b> let you recover your account if you lose your phone. Store them safely offline.',
+    '2FA doesn’t stop all phishing. Attackers can still <b>trick you into giving up a code</b>.',
+    'Turn on 2FA for your <b>email first</b>, because email can reset every other account.'
+  ],
+  [
+    'Social engineering manipulates <b>people</b>. Attackers exploit <b>fear, curiosity, urgency, authority and the wish to help</b>. They rarely exploit skepticism, which is your best defense.',
+    '<b>Pretexting</b> means inventing a believable story (“I’m from IT”) to get information.',
+    'Pressure tactics include tight deadlines and secrecy (“don’t tell anyone”), like a “boss” urgently needing gift cards.',
+    '<b>Verify through a separate channel</b>: hang up and call back on a number you already know. Real IT never needs your password.',
+    '<b>Tailgating</b> is following you through a secure door. Politely ask people to badge in, or call security.',
+    'A <b>USB stick you find</b> may hold malware. Don’t plug it in. Hand it to IT.',
+    'Don’t give security answers (like your mother’s maiden name) to callers or surveys.',
+    'Pause on anything urgent, and <b>report attempts</b> to your IT or security team to protect others.'
+  ],
+  [
+    '<b>“Which pet + which street” quizzes</b> collect common security-question answers, so skip them.',
+    '<b>Post trips after you return</b>, because live posts and tags tell people your home is empty.',
+    'A friend’s account asking for money: <b>call them on a known number</b>. It may be hijacked.',
+    '<b>A friend request from someone you already know</b> may be a clone. Check with the real person.',
+    'Platforms don’t DM you threats. A message like “Verify your page or lose it!” from “Support” is a scam: ignore and report it.',
+    'Safest privacy setup: <b>friends only</b>, with tags reviewed. Keep your <b>phone number, ID and address</b> private.',
+    'Photos can reveal a <b>house number or school uniform</b> in the background.',
+    '<b>Old posts</b> can still reveal personal info, so review and delete them. Links in social-media ads can lead to scam shops and phishing, so check the domain first.'
+  ],
+  [
+    '<b>Evil twin</b> networks copy a real name (like “CafeWiFi_Free”). Ask staff for the exact network name.',
+    'For banking or shopping away from home, use <b>mobile data</b> instead of public Wi-Fi.',
+    'Turn <b>off “auto-join” and file sharing</b>. Auto-connect to open networks lets your device join fake hotspots silently.',
+    'A <b>VPN</b> encrypts your traffic on the network. It doesn’t make you anonymous or block viruses.',
+    'The <b>HTTPS padlock</b> means the connection is encrypted. It doesn’t prove the site is trustworthy, since scam sites can have padlocks too.',
+    'On public Wi-Fi, stick to <b>non-sensitive browsing</b> like reading news. Don’t enter card numbers.',
+    'A <b>password-protected personal hotspot</b> is usually safer than open Wi-Fi.',
+    'When you’re done, <b>forget the network</b> so it doesn’t auto-reconnect. Never type your real email password into a Wi-Fi sign-in page. Skip it or use a throwaway email.'
+  ],
+  [
+    'Scams share a shape: a surprise offer or threat, <b>pressure to act fast</b> and an unusual payment method.',
+    '<b>Advance-fee fraud</b>: real prizes never charge fees, and you can’t win a contest you never entered.',
+    '<b>Overpayment scam</b>: they send a check and ask you to wire some back. The check bounces after you’ve sent real money.',
+    'Scammers love <b>gift cards, wire transfers and crypto</b>. Wires and crypto are the hardest to reverse. Credit cards offer dispute rights.',
+    '<b>“Tech support” callers</b> who say your PC is infected are scammers, because legitimate firms don’t cold-call about viruses.',
+    '<b>Romance scams</b> start online and soon ask for money, gift cards or wires for “emergencies”.',
+    '“<b>Guaranteed</b> 20% weekly returns” are fraud. No real investment guarantees high returns.',
+    '<b>Grandparent scams</b>: hang up and call the relative directly before sending anything.',
+    'Report scams at <b>reportfraud.ftc.gov</b> (U.S.). If you already paid, contact your bank immediately, because speed gives the best chance of recovery.'
+  ],
+  [
+    'Never give your <b>SSN</b> for something like a free download. <b>Share the minimum</b> and skip optional form fields.',
+    'After a data breach: <b>change passwords and consider a credit freeze</b>.',
+    'A <b>credit freeze</b> blocks new credit accounts in your name. It is free and reversible.',
+    'Safe to share publicly: general interests. Unsafe: your <b>home address</b>, birth date and phone number.',
+    'Before recycling a phone: <b>back it up and factory-reset it</b> so data can’t be recovered.',
+    '<b>Shred</b> paper with account details, like junk mail with account numbers, to stop dumpster diving.',
+    '<b>Email aliases</b> hide your main address from sites, and you can disable a leaked alias.',
+    'If someone says “we’re updating records, confirm your SSN”, <b>contact the organization using official channels</b>.',
+    'Apps should only get permissions they need. A flashlight doesn’t need your contacts, so deny it.'
+  ],
+  [
+    '<b>Ransomware</b> locks your files and demands payment. The best defense is <b>offline backups plus updates</b>. Don’t pay without expert advice.',
+    'Cracked or pirated installers are a favorite hiding place for malware, so download only from official stores.',
+    'A popup with a phone number and a scary message is a <b>scam</b>. A website can’t scan your PC, so close the tab and don’t call.',
+    '<b>Updates</b> fix security holes attackers use.',
+    'The <b>3-2-1 backup rule</b>: 3 copies, on 2 types of media, with 1 offline.',
+    'If an app <b>unexpectedly asks for admin rights</b>, deny it and investigate.',
+    '<b>Signs of malware</b>: unexplained slowness, popups, strange accounts or changed settings.',
+    '<b>Antivirus helps</b>, but it doesn’t replace caution. Layers beat any single tool.',
+    'Install only <b>browser extensions</b> you trust and need, since they can read your pages.',
+    'If you suspect malware: <b>disconnect from the network and scan</b>.'
+  ]
+];
 
-KF.forEach((x,i)=>L[i].k=x);
+KF.forEach((x, i) => L[i].k = x);
 
-L[5].vl=['✅ Verdict: SAFE and GENUINE','🚩 Verdict: RISKY or FAKE'];
+L[5].vl = ['✅ Verdict: SAFE and GENUINE', '🚩 Verdict: RISKY or FAKE'];
 
-L[2].ql=['💪 Strong / good habit','⚠️ Weak / bad habit'];
+L[2].ql = ['💪 Strong / good habit', '⚠️ Weak / bad habit'];
 
-L[4].ql=['✅ Genuine / safe','🚩 Social engineering'];
+L[4].ql = ['✅ Genuine / safe', '🚩 Social engineering'];
 
-L[5].ql=['✅ Safe / genuine','🚩 Risky or fake'];
+L[5].ql = ['✅ Safe / genuine', '🚩 Risky or fake'];
 
 /* ---------- Matching questions and quiz builders ---------- */
 
-const MQ=[
-['Match each message to the type of phishing.',[['A text saying “Your parcel is held. Pay £1.45”','Smishing'],['A call: “Your bank here, press 1 to verify”','Vishing'],['An email using your name, employer and project','Spear phishing'],['A mass email: “Dear customer, verify now”','Email phishing']]],
-['Match each red flag to an example.',[['Lookalike domain','paypa1-secure.com'],['Generic greeting','“Dear customer”'],['Disguised attachment','invoice.pdf.exe'],['Urgency','“Account closes in 24 hours!”']]],
-['Match each password to the problem or strength.',[['Password1!','Weak: a common pattern'],['Max2015!','Weak: built from personal facts'],['maple-rocket-violin-cabin','Strong: long and random'],['Same password on four sites','Risky: one breach opens everything']]],
-['Match each idea to its meaning.',[['Something you know','A password'],['Something you have','An authenticator app or security key'],['Something you are','A fingerprint or face scan'],['SIM swapping','Stealing SMS codes by moving your number']]],
-['Match each term to its description.',[['Pretexting','Inventing a believable story'],['Tailgating','Following someone through a secure door'],['USB baiting','Leaving infected drives to tempt people'],['Gift-card request from a “boss”','Impersonation with urgency and secrecy']]],
-['Match each situation to the risk.',[['A quiz: “first pet + street”','It harvests security answers'],['New account asking friends for money','A cloned or fake profile'],['A DM saying “Verify your page”','A fake support scam'],['A live location tag on a trip','It tells strangers your home is empty']]],
-['Match each term to what it means.',[['Evil twin','A fake hotspot copying a real name'],['VPN','Encrypts your traffic on the network'],['HTTPS padlock','Encrypted connection, not proof of trust'],['Mobile data','Safer than public Wi-Fi for banking']]],
-['Match each scam to how it works.',[['Overpayment scam','A fake check and a request to wire back extra'],['Advance-fee fraud','A fee to claim a prize'],['Romance scam','Online love that asks for money'],['Grandparent scam','A fake relative in trouble']]],
-['Match each habit to what it does.',[['Credit freeze','Blocks new accounts in your name'],['Email alias','Hides your main address from sites'],['Shredding','Destroys paper with account details'],['Factory reset','Wipes an old phone before recycling']]],
-['Match each item to its description.',[['Ransomware','Locks files and demands payment'],['3-2-1 backups','3 copies, 2 media types, 1 offline'],['Cracked installer','A common way malware spreads'],['Software updates','Patch security holes attackers use']]]];
+const MQ = [
+  [['A text saying “Your parcel is held. Pay £1.45”', 'Smishing'], ['A call: “Your bank here, press 1 to verify”', 'Vishing'], ['An email using your name, employer and project', 'Spear phishing'], ['A mass email: “Dear customer, verify now”', 'Email phishing']],
+  [['Lookalike domain', 'paypa1-secure.com'], ['Generic greeting', '“Dear customer”'], ['Disguised attachment', 'invoice.pdf.exe'], ['Urgency', '“Account closes in 24 hours!”']],
+  [['Password1!', 'Weak: a common pattern'], ['Max2015!', 'Weak: built from personal facts'], ['maple-rocket-violin-cabin', 'Strong: long and random'], ['Same password on four sites', 'Risky: one breach opens everything']],
+  [['Something you know', 'A password'], ['Something you have', 'An authenticator app or security key'], ['Something you are', 'A fingerprint or face scan'], ['SIM swapping', 'Stealing SMS codes by moving your number']],
+  [['Pretexting', 'Inventing a believable story'], ['Tailgating', 'Following someone through a secure door'], ['USB baiting', 'Leaving infected drives to tempt people'], ['Gift-card request from a “boss”', 'Impersonation with urgency and secrecy']],
+  [['A quiz: “first pet + street”', 'It harvests security answers'], ['New account asking friends for money', 'A cloned or fake profile'], ['A DM saying “Verify your page”', 'A fake support scam'], ['A live location tag on a trip', 'It tells strangers your home is empty']],
+  [['Evil twin', 'A fake hotspot copying a real name'], ['VPN', 'Encrypts your traffic on the network'], ['HTTPS padlock', 'Encrypted connection, not proof of trust'], ['Mobile data', 'Safer than public Wi-Fi for banking']],
+  [['Overpayment scam', 'A fake check and a request to wire back extra'], ['Advance-fee fraud', 'A fee to claim a prize'], ['Romance scam', 'Online love that asks for money'], ['Grandparent scam', 'A fake relative in trouble']],
+  [['Credit freeze', 'Blocks new accounts in your name'], ['Email alias', 'Hides your main address from sites'], ['Shredding', 'Destroys paper with account details'], ['Factory reset', 'Wipes an old phone before recycling']],
+  [['Ransomware', 'Locks files and demands payment'], ['3-2-1 backups', '3 copies, 2 media types, 1 offline'], ['Cracked installer', 'A common way malware spreads'], ['Software updates', 'Patch security holes attackers use']]
+];
 
-MQ.forEach((m,i)=>L[i].m={d:m[0],p:m[1]});
+MQ.forEach((m, i) => L[i].m = { d: m[0], p: m[1] });
 
-KF[4][5]=KF[4][5].replace('A <b>USB stick you find</b>','<b>USB baiting</b>: a <b>USB stick you find</b>');L[4].k=KF[4];
+KF[4][5] = KF[4][5].replace('A <b>USB stick you find</b>', '<b>USB baiting</b>: a <b>USB stick you find</b>');
+L[4].k = KF[4];
 
-const rfq=x=>({t:'rf',f:x[0],fake:x[1],why:x[2]}),mtq=i=>({t:'mt',d:L[i].m.d,p:L[i].m.p});
+const rfq = x => ({ t: 'rf', f: x[0], fake: x[1], why: x[2] }),
+      mtq = i => ({ t: 'mt', d: L[i].m.d, p: L[i].m.p });
 
-const buildQuiz=i=>sh([...sh(L[i].q).slice(0,5).map(q=>({q,i})),...sh(RF[i]).slice(0,4).map(x=>({q:rfq(x),i})),{q:mtq(i),i}]);
+const buildQuiz = i => sh([...sh(L[i].q).slice(0, 5).map(q => ({ q, i })), ...sh(RF[i]).slice(0, 4).map(x => ({ q: rfq(x), i })), { q: mtq(i), i }]);
 
-const buildExam=()=>sh(L.flatMap((l,i)=>[{q:sh(EXQ[i])[0],i},{q:i%2?{t:'mt',d:EXM[i].d,p:EXM[i].p}:rfq(sh(EXR[i])[0]),i}]));
+const buildExam = () => sh(L.flatMap((l, i) => [{ q: sh(EXQ[i])[0], i }, { q: i % 2 ? { t: 'mt', d: EXM[i].d, p: EXM[i].p } : rfq(sh(EXR[i])[0]), i }]));
 
-function qDone(g,i,msg){if(g)S.ok++;else S.miss[i]=(S.miss[i]||0)+1;g?ok():no();
- $('#fb').innerHTML=`<div class="fb ${g?'ok':'bad'}"><b>${g?'Nice one! ':'Not quite. '}</b>${msg}</div><button class="pri" id="nx">${S.qi<S.qs.length-1?'Next question':'See results'}</button>`;$('#nx').focus();$('#nx').onclick=()=>{S.qi++;S.qi<S.qs.length?askQ():S.m.fin()}}
+function qDone(g, i, msg) {
+  if (g) S.ok++; else S.miss[i] = (S.miss[i] || 0) + 1;
+  g ? ok() : no();
+  $('#fb').innerHTML = `<div class="fb ${g ? 'ok' : 'bad'}"><b>${g ? 'Nice one! ' : 'Not quite. '}</b>${msg}</div><button class="pri" id="nx">${S.qi < S.qs.length - 1 ? 'Next question' : 'See results'}</button>`;
+  $('#nx').focus();
+  $('#nx').onclick = () => { S.qi++; S.qi < S.qs.length ? askQ() : S.m.fin(); };
+}
 
-const qHead=()=>`<p class="mute">${S.m.title} · Question ${S.qi+1} of ${S.qs.length}</p><div class="bar" style="margin-bottom:14px"><i style="width:${S.qi/S.qs.length*100}%"></i></div>`;
+const qHead = () => `<p class="mute">${S.m.title} · Question ${S.qi + 1} of ${S.qs.length}</p><div class="bar" style="margin-bottom:14px"><i style="width:${S.qi / S.qs.length * 100}%"></i></div>`;
 
-function askRF(q,i){const lab=L[i].ql||['✅ Real / legit','🚩 Fake / scam'];
- $('#app').innerHTML=`<div class="card">${qHead()}<h2>🔍 Look closely. Which is it?</h2>${q.f}<div class="rfb"><button class="opt" data-v="0">${lab[0]}</button><button class="opt" data-v="1">${lab[1]}</button></div><div id="fb" aria-live="polite"></div></div>`;scrollTo(0,0);
- document.querySelectorAll('.rfb .opt').forEach(b=>b.onclick=()=>{const g=+b.dataset.v===q.fake;document.querySelectorAll('.rfb .opt').forEach(x=>x.disabled=true);document.querySelector(`.rfb [data-v="${q.fake}"]`).classList.add('right');if(!g)b.classList.add('wrong');qDone(g,i,q.why)})}
+function askRF(q, i) {
+  const lab = L[i].ql || ['✅ Real / legit', '🚩 Fake / scam'];
+  $('#app').innerHTML = `<div class="card">${qHead()}<h2>🔍 Look closely. Which is it?</h2>${q.f}<div class="rfb"><button class="opt" data-v="0">${lab[0]}</button><button class="opt" data-v="1">${lab[1]}</button></div><div id="fb" aria-live="polite"></div></div>`;
+  scrollTo(0, 0);
+  document.querySelectorAll('.rfb .opt').forEach(b => b.onclick = () => {
+    const g = +b.dataset.v === q.fake;
+    document.querySelectorAll('.rfb .opt').forEach(x => x.disabled = true);
+    document.querySelector(`.rfb [data-v="${q.fake}"]`).classList.add('right');
+    if (!g) b.classList.add('wrong');
+    qDone(g, i, q.why);
+  });
+}
 
-function askMT(q,i){const defs=sh(q.p.map(x=>x[1])),sel=q.p.map(()=>-1);
- $('#app').innerHTML=`<div class="card">${qHead()}<h2>🔗 Match the following</h2><p>${q.d} Tap an answer under each item. Tapping again unselects it.</p>${q.p.map((x,k)=>`<div class="mrow" data-r="${k}"><div class="mq"><b>${x[0]}</b></div><div class="chips">${defs.map((d,j)=>`<button class="chip" data-k="${k}" data-j="${j}">${d}</button>`).join('')}</div></div>`).join('')}<p class="mute" id="mc">Matched 0 of ${q.p.length}</p><button class="pri" id="ck" disabled>Check my matches</button><div id="fb" aria-live="polite"></div></div>`;scrollTo(0,0);
- const paint=()=>{document.querySelectorAll('.chip').forEach(b=>{const k=+b.dataset.k,j=+b.dataset.j;b.classList.toggle('on',sel[k]===j);b.classList.toggle('taken',sel[k]!==j&&sel.some((v,o)=>o!==k&&v===j))});const n=sel.filter(v=>v>=0).length;$('#mc').textContent=`Matched ${n} of ${q.p.length}`;$('#ck').disabled=n<q.p.length};
- document.querySelectorAll('.chip').forEach(b=>b.onclick=()=>{const k=+b.dataset.k,j=+b.dataset.j;if(sel[k]===j)sel[k]=-1;else{sel.forEach((v,o)=>{if(v===j)sel[o]=-1});sel[k]=j}paint()});
- $('#ck').onclick=()=>{let n=0;q.p.forEach((x,k)=>{const good=defs[sel[k]]===x[1];if(good)n++;const row=document.querySelector(`[data-r="${k}"]`);row.classList.add(good?'okr':'badr');row.querySelectorAll('.chip').forEach(c=>{c.disabled=true;const d=defs[+c.dataset.j];if(d===x[1])c.classList.add('right');else if(+c.dataset.j===sel[k])c.classList.add('wrong')});if(!good)row.querySelector('.mq').insertAdjacentHTML('beforeend',` <b class="dont">✖</b> <span class="mute">Correct: ${x[1]}</span>`);else row.querySelector('.mq').insertAdjacentHTML('beforeend',' <b class="do">✔</b>')});
-  $('#ck').remove();qDone(n===q.p.length,i,`You matched ${n} of ${q.p.length} correctly. All matches must be right to score this question.`)}}
+function askMT(q, i) {
+  const defs = sh(q.p.map(x => x[1])), sel = q.p.map(() => -1);
+  $('#app').innerHTML = `<div class="card">${qHead()}<h2>🔗 Match the following</h2><p>${q.d} Tap an answer under each item. Tapping again unselects it.</p>${q.p.map((x, k) => `<div class="mrow" data-r="${k}"><div class="mq"><b>${x[0]}</b></div><div class="chips">${defs.map((d, j) => `<button class="chip" data-k="${k}" data-j="${j}">${d}</button>`).join('')}</div></div>`).join('')}<p class="mute" id="mc">Matched 0 of ${q.p.length}</p><button class="pri" id="ck" disabled>Check my matches</button><div id="fb" aria-live="polite"></div></div>`;
+  scrollTo(0, 0);
+  const paint = () => {
+    document.querySelectorAll('.chip').forEach(b => {
+      const k = +b.dataset.k, j = +b.dataset.j;
+      b.classList.toggle('on', sel[k] === j);
+      b.classList.toggle('taken', sel[k] !== j && sel.some((v, o) => o !== k && v === j));
+    });
+    const n = sel.filter(v => v >= 0).length;
+    $('#mc').textContent = `Matched ${n} of ${q.p.length}`;
+    $('#ck').disabled = n < q.p.length;
+  };
+  document.querySelectorAll('.chip').forEach(b => b.onclick = () => {
+    const k = +b.dataset.k, j = +b.dataset.j;
+    if (sel[k] === j) sel[k] = -1;
+    else {
+      sel.forEach((v, o) => { if (v === j) sel[o] = -1; });
+      sel[k] = j;
+    }
+    paint();
+  });
+  $('#ck').onclick = () => {
+    let n = 0;
+    q.p.forEach((x, k) => {
+      const good = defs[sel[k]] === x[1];
+      if (good) n++;
+      const row = document.querySelector(`[data-r="${k}"]`);
+      row.classList.add(good ? 'okr' : 'badr');
+      row.querySelectorAll('.chip').forEach(c => {
+        c.disabled = true;
+        const d = defs[+c.dataset.j];
+        if (d === x[1]) c.classList.add('right');
+        else if (+c.dataset.j === sel[k]) c.classList.add('wrong');
+      });
+      if (!good) row.querySelector('.mq').insertAdjacentHTML('beforeend', ` <b class="dont">✖</b> <span class="mute">Correct: ${x[1]}</span>`);
+      else row.querySelector('.mq').insertAdjacentHTML('beforeend', ' <b class="do">✔</b>');
+    });
+    $('#ck').remove();
+    qDone(n === q.p.length, i, `You matched ${n} of ${q.p.length} correctly. All matches must be right to score this question.`);
+  };
+}
 
 /* ---------- Final-exam multiple-choice bank (same skills, different questions) ---------- */
 
-const EXQ=[
-[['An automated voice calls saying your bank account is frozen and tells you to “press 1 now”. This is…',['Vishing','Smishing','Normal bank procedure'],0,'Phishing by voice call is vishing. Hang up and contact your bank yourself.'],['An email uses your name, your manager’s name and a project you’re really on, then asks you to open a file. It could still be…',['Spear phishing','A system backup','A harmless survey'],0,'Spear phishing is targeted using facts gathered about you, so correct details don’t prove it’s real.'],['You clicked a suspicious delivery link but entered nothing. The best next move is to…',['Do nothing','Close it, run a scan and watch your accounts','Reply to the sender'],1,'Some pages install malware, so scan and monitor.']],
-[['Which address is the real Microsoft?',['support@microsoft.com','support@microsoft.com.secure-login.net','support@micros0ft.com'],0,'Read from the right: the name before the final dot is the real owner.'],['You hover over “Track your order” and the preview shows only a string of numbers instead of a website name. This suggests…',['It’s phishing','A faster server','The link is encrypted'],0,'A destination that doesn’t match the text, or is a bare number, is a warning sign.'],['An unexpected “resume.zip” arrives from someone you don’t know. You should…',['Open it to look','Delete it or report it','Forward it to a friend'],1,'Zip, exe and macro files are risky when unexpected.']],
-[['Which new password is best for your email?',['Spring2025!','Dog1990','tulip-anchor-brick-velvet-saddle'],2,'Long, random words beat short patterns and personal facts.'],['A streaming site you use is breached, and you used that password for your bank too. You should…',['Change the bank password and any other reused ones now','Wait and see','Only change the streaming one'],0,'Reuse spreads one breach to every account sharing the password.'],['The safest answer to “What was your first school?” is…',['The real school','A random made-up answer saved in your manager','Your mother’s maiden name'],1,'True answers can be found online.']],
-[['Which login protection is strongest?',['Password plus a text-message code','Password plus a hardware security key','Password plus an email hint'],1,'Hardware keys resist phishing and can’t be intercepted like SMS codes.'],['Your phone suddenly loses signal and you get “SIM changed” alerts. This could be…',['SIM swapping','A software update','Weak Wi-Fi'],0,'Attackers move your number to their SIM to capture SMS codes.'],['At midnight a prompt asks you to approve a sign-in you never started. You…',['Deny it and change your password','Approve it to clear the notification','Ignore your phone'],0,'Approving gives the attacker access. Deny and reset.']],
-[['A person in a delivery uniform asks you to hold a badge-controlled door. Best response?',['Hold it open','Ask them to badge in or call security','Let them in if they seem friendly'],1,'This is tailgating. Politely enforce the access rules.'],['“Your manager” texts from a new number demanding gift-card codes now and secrecy. This is…',['A normal request','A social-engineering attempt','A staff reward'],1,'Urgency, secrecy and gift cards are classic tells. Verify by phone or in person.'],['You find a USB drive marked “Salary data” outside the office. You…',['Plug it into your laptop','Give it to IT without plugging it in','Keep it in your drawer'],1,'Dropped drives are bait and often hold malware.']],
-[['A post asks you to comment your first car and your high school’s name. The risk is…',['They’re common security-question answers','It slows your phone','It shows your age'],0,'Treat answers to security questions like passwords.'],['A “friend” asks you to send money, but you’re already friends with the real person. You…',['Send it','Phone your friend to check, then report the profile','Send half'],1,'It’s likely a cloned account.'],['Which is safest to share?',['A photo of your new driver’s license','A picture from last month’s hike, posted today','Your boarding pass'],1,'Posting after the fact with no ID or booking details is low-risk.']],
-[['At the airport you need to pay a bill. The best choice is…',['Free airport Wi-Fi','Your mobile data','Any open network called “Airport Free”'],1,'Mobile data isn’t shared with strangers.'],['A padlock shows on a free-Wi-Fi sign-in page. That proves…',['The page is trustworthy','The connection is encrypted, not that the site is safe','Nothing at all'],1,'Scam sites can have padlocks too.'],['After using hotel Wi-Fi, you should…',['Stay connected','Forget the network','Share it with friends'],1,'It stops your device auto-reconnecting.']],
-[['An email says you won a lottery you never entered and must pay “taxes” first. This is…',['Advance-fee fraud','A normal process','A refund'],0,'Real prizes never charge fees.'],['Someone you met online asks for gift cards to fund an “emergency flight”. You…',['Send them','Stop: it’s a romance scam','Ask for a receipt later'],1,'Online romance plus requests for gift cards is a classic scam.'],['Which payment is hardest to get back?',['A credit card charge','Cryptocurrency or a wire transfer','A card with a chargeback'],1,'Scammers prefer irreversible payments.']],
-[['A store asks for your phone number and birthday before giving a receipt. You…',['Give both','Politely decline the optional details','Give a friend’s details'],1,'Share the minimum and skip optional details.'],['Which action blocks criminals from opening new credit accounts in your name?',['A credit freeze','Deleting your email','A longer password'],0,'A freeze is free and reversible.'],['Before selling your old laptop you should…',['Delete a few files','Back it up and factory-reset it','Remove the sticker'],1,'Wiping prevents data recovery.']],
-[['Your files are locked and there’s a ransom note. The best protection beforehand was…',['Offline backups and updates','Paying quickly','A louder alarm'],0,'Backups let you restore without paying.'],['A forum “crack” promises a paid game for free. It’s likely…',['Safe','A route to malware','Official'],1,'Cracked installers hide malware.'],['A browser extension asks to read all data on every site. You…',['Allow it','Deny it: install only trusted extensions you need','Allow it once'],1,'Extensions can read your pages.']]];
+const EXQ = [
+  [
+    ['An automated voice calls saying your bank account is frozen and tells you to “press 1 now”. This is…', ['Vishing', 'Smishing', 'Normal bank procedure'], 0, 'Phishing by voice call is vishing. Hang up and contact your bank yourself.'],
+    ['An email uses your name, your manager’s name and a project you’re really on, then asks you to open a file. It could still be…', ['Spear phishing', 'A system backup', 'A harmless survey'], 0, 'Spear phishing is targeted using facts gathered about you, so correct details don’t prove it’s real.'],
+    ['You clicked a suspicious delivery link but entered nothing. The best next move is to…', ['Do nothing', 'Close it, run a scan and watch your accounts', 'Reply to the sender'], 1, 'Some pages install malware, so scan and monitor.']
+  ],
+  [
+    ['Which address is the real Microsoft?', ['support@microsoft.com', 'support@microsoft.com.secure-login.net', 'support@micros0ft.com'], 0, 'Read from the right: the name before the final dot is the real owner.'],
+    ['You hover over “Track your order” and the preview shows only a string of numbers instead of a website name. This suggests…', ['It’s phishing', 'A faster server', 'The link is encrypted'], 0, 'A destination that doesn’t match the text, or is a bare number, is a warning sign.'],
+    ['An unexpected “resume.zip” arrives from someone you don’t know. You should…', ['Open it to look', 'Delete it or report it', 'Forward it to a friend'], 1, 'Zip, exe and macro files are risky when unexpected.']
+  ],
+  [
+    ['Which new password is best for your email?', ['Spring2025!', 'Dog1990', 'tulip-anchor-brick-velvet-saddle'], 2, 'Long, random words beat short patterns and personal facts.'],
+    ['A streaming site you use is breached, and you used that password for your bank too. You should…', ['Change the bank password and any other reused ones now', 'Wait and see', 'Only change the streaming one'], 0, 'Reuse spreads one breach to every account sharing the password.'],
+    ['The safest answer to “What was your first school?” is…', ['The real school', 'A random made-up answer saved in your manager', 'Your mother’s maiden name'], 1, 'True answers can be found online.']
+  ],
+  [
+    ['Which login protection is strongest?', ['Password plus a text-message code', 'Password plus a hardware security key', 'Password plus an email hint'], 1, 'Hardware keys resist phishing and can’t be intercepted like SMS codes.'],
+    ['Your phone suddenly loses signal and you get “SIM changed” alerts. This could be…', ['SIM swapping', 'A software update', 'Weak Wi-Fi'], 0, 'Attackers move your number to their SIM to capture SMS codes.'],
+    ['At midnight a prompt asks you to approve a sign-in you never started. You…', ['Deny it and change your password', 'Approve it to clear the notification', 'Ignore your phone'], 0, 'Approving gives the attacker access. Deny and reset.']
+  ],
+  [
+    ['A person in a delivery uniform asks you to hold a badge-controlled door. Best response?', ['Hold it open', 'Ask them to badge in or call security', 'Let them in if they seem friendly'], 1, 'This is tailgating. Politely enforce the access rules.'],
+    ['“Your manager” texts from a new number demanding gift-card codes now and secrecy. This is…', ['A normal request', 'A social-engineering attempt', 'A staff reward'], 1, 'Urgency, secrecy and gift cards are classic tells. Verify by phone or in person.'],
+    ['You find a USB drive marked “Salary data” outside the office. You…', ['Plug it into your laptop', 'Give it to IT without plugging it in', 'Keep it in your drawer'], 1, 'Dropped drives are bait and often hold malware.']
+  ],
+  [
+    ['A post asks you to comment your first car and your high school’s name. The risk is…', ['They’re common security-question answers', 'It slows your phone', 'It shows your age'], 0, 'Treat answers to security questions like passwords.'],
+    ['A “friend” asks you to send money, but you’re already friends with the real person. You…', ['Send it', 'Phone your friend to check, then report the profile', 'Send half'], 1, 'It’s likely a cloned account.'],
+    ['Which is safest to share?', ['A photo of your new driver’s license', 'A picture from last month’s hike, posted today', 'Your boarding pass'], 1, 'Posting after the fact with no ID or booking details is low-risk.']
+  ],
+  [
+    ['At the airport you need to pay a bill. The best choice is…', ['Free airport Wi-Fi', 'Your mobile data', 'Any open network called “Airport Free”'], 1, 'Mobile data isn’t shared with strangers.'],
+    ['A padlock shows on a free-Wi-Fi sign-in page. That proves…', ['The page is trustworthy', 'The connection is encrypted, not that the site is safe', 'Nothing at all'], 1, 'Scam sites can have padlocks too.'],
+    ['After using hotel Wi-Fi, you should…', ['Stay connected', 'Forget the network', 'Share it with friends'], 1, 'It stops your device auto-reconnecting.']
+  ],
+  [
+    ['An email says you won a lottery you never entered and must pay “taxes” first. This is…', ['Advance-fee fraud', 'A normal process', 'A refund'], 0, 'Real prizes never charge fees.'],
+    ['Someone you met online asks for gift cards to fund an “emergency flight”. You…', ['Send them', 'Stop: it’s a romance scam', 'Ask for a receipt later'], 1, 'Online romance plus requests for gift cards is a classic scam.'],
+    ['Which payment is hardest to get back?', ['A credit card charge', 'Cryptocurrency or a wire transfer', 'A card with a chargeback'], 1, 'Scammers prefer irreversible payments.']
+  ],
+  [
+    ['A store asks for your phone number and birthday before giving a receipt. You…', ['Give both', 'Politely decline the optional details', 'Give a friend’s details'], 1, 'Share the minimum and skip optional details.'],
+    ['Which action blocks criminals from opening new credit accounts in your name?', ['A credit freeze', 'Deleting your email', 'A longer password'], 0, 'A freeze is free and reversible.'],
+    ['Before selling your old laptop you should…', ['Delete a few files', 'Back it up and factory-reset it', 'Remove the sticker'], 1, 'Wiping prevents data recovery.']
+  ],
+  [
+    ['Your files are locked and there’s a ransom note. The best protection beforehand was…', ['Offline backups and updates', 'Paying quickly', 'A louder alarm'], 0, 'Backups let you restore without paying.'],
+    ['A forum “crack” promises a paid game for free. It’s likely…', ['Safe', 'A route to malware', 'Official'], 1, 'Cracked installers hide malware.'],
+    ['A browser extension asks to read all data on every site. You…', ['Allow it', 'Deny it: install only trusted extensions you need', 'Allow it once'], 1, 'Extensions can read your pages.']
+  ]
+];
 
-const EXM=[,{d:'Match each red flag to an example.',p:[['Fake sender address','security@amaz0n-help.com'],['Mismatched link','Hover shows a different site than the text'],['Double extension','report.pdf.exe'],['Pressure','“Reply within the hour or lose access”']]},,
-{d:'Match each item to its role.',p:[['Hardware key','The strongest second factor'],['Backup codes','Recover your account if you lose your phone'],['MFA fatigue','Spamming approval prompts until you tap yes'],['Email account','The first place to turn on 2FA']]},,
-{d:'Match each habit or threat to its meaning.',p:[['Posting after you return','Doesn’t advertise an empty house'],['Friends-only audience','Limits who can see your posts'],['A new “friend” asking for money','A cloned account'],['Security-question quiz','Harvests answers like pet or street']]},,
-{d:'Match each scam clue to what it means.',p:[['Check overpayment','Wire back the extra, then the check bounces'],['“Guaranteed” returns','A sign of investment fraud'],['Gift cards demanded','A favorite scammer payment'],['reportfraud.ftc.gov','Where to report scams in the U.S.']]},,
-{d:'Match each action to its purpose.',p:[['Offline backup','Restore files without paying a ransom'],['Unexpected admin-rights prompt','Deny it and investigate'],['Browser extension','Install only trusted ones you need'],['Disconnect and scan','First step if you suspect malware']]}];
+const EXM = [
+  ,
+  { d: 'Match each red flag to an example.', p: [['Fake sender address', 'security@amaz0n-help.com'], ['Mismatched link', 'Hover shows a different site than the text'], ['Double extension', 'report.pdf.exe'], ['Pressure', '“Reply within the hour or lose access”']] },
+  ,
+  { d: 'Match each item to its role.', p: [['Hardware key', 'The strongest second factor'], ['Backup codes', 'Recover your account if you lose your phone'], ['MFA fatigue', 'Spamming approval prompts until you tap yes'], ['Email account', 'The first place to turn on 2FA']] },
+  ,
+  { d: 'Match each habit or threat to its meaning.', p: [['Posting after you return', 'Doesn’t advertise an empty house'], ['Friends-only audience', 'Limits who can see your posts'], ['A new “friend” asking for money', 'A cloned account'], ['Security-question quiz', 'Harvests answers like pet or street']] },
+  ,
+  { d: 'Match each scam clue to what it means.', p: [['Check overpayment', 'Wire back the extra, then the check bounces'], ['“Guaranteed” returns', 'A sign of investment fraud'], ['Gift cards demanded', 'A favorite scammer payment'], ['reportfraud.ftc.gov', 'Where to report scams in the U.S.']] },
+  ,
+  { d: 'Match each action to its purpose.', p: [['Offline backup', 'Restore files without paying a ransom'], ['Unexpected admin-rights prompt', 'Deny it and investigate'], ['Browser extension', 'Install only trusted ones you need'], ['Disconnect and scan', 'First step if you suspect malware']] }
+];
 
 /* ---------- Mascot: Shieldy ---------- */
 
-const MAS=c=>`<div class="mas ${c||''}" id="mas" role="button" tabindex="0" aria-label="Shieldy the shield mascot. Tap me!"><svg viewBox="0 -30 160 224" width="100%" aria-hidden="true"><ellipse cx="80" cy="184" rx="40" ry="6" fill="#0002"/><g class="armL"><path d="M44 104 Q18 96 14 66" stroke="#244855" stroke-width="11" stroke-linecap="round" fill="none"/><circle cx="14" cy="62" r="9" fill="#f3d9b1"/></g><g class="armR"><path d="M116 104 Q142 96 146 66" stroke="#244855" stroke-width="11" stroke-linecap="round" fill="none"/><circle cx="146" cy="62" r="9" fill="#f3d9b1"/></g><ellipse cx="62" cy="176" rx="15" ry="7" fill="#244855"/><ellipse cx="98" cy="176" rx="15" ry="7" fill="#244855"/><path d="M80 20 L134 38 V94 C134 130 110 156 80 170 C50 156 26 130 26 94 V38 Z" fill="#90AEAD" stroke="#244855" stroke-width="4" stroke-linejoin="round"/><path d="M80 32 L122 46 V94 C122 122 102 144 80 156 C58 144 38 122 38 94 V46 Z" fill="#b7cccb"/><circle cx="62" cy="76" r="12" fill="#fff" stroke="#244855" stroke-width="2"/><circle cx="98" cy="76" r="12" fill="#fff" stroke="#244855" stroke-width="2"/><circle class="pu" cx="62" cy="76" r="6" fill="#2b2b2b"/><circle class="pu" cx="98" cy="76" r="6" fill="#2b2b2b"/><circle cx="48" cy="96" r="6" fill="#E64833" opacity=".35"/><circle cx="112" cy="96" r="6" fill="#E64833" opacity=".35"/><path d="M62 98 Q80 118 98 98" stroke="#2b2b2b" stroke-width="4.5" stroke-linecap="round" fill="none"/><path d="M60 28 L80 -22 L100 28 Z" fill="#E64833" stroke="#874F41" stroke-width="2" stroke-linejoin="round"/><path d="M68 10 L92 10 M64 20 L96 20" stroke="#FBE9D0" stroke-width="4" opacity=".9"/><circle cx="80" cy="-24" r="7" fill="#874F41"/></svg></div>`;
+const MAS = c => `<div class="mas ${c || ''}" id="mas" role="button" tabindex="0" aria-label="Shieldy the shield mascot. Tap me!"><svg viewBox="0 -30 160 224" width="100%" aria-hidden="true"><ellipse cx="80" cy="184" rx="40" ry="6" fill="#0002"/><g class="armL"><path d="M44 104 Q18 96 14 66" stroke="#244855" stroke-width="11" stroke-linecap="round" fill="none"/><circle cx="14" cy="62" r="9" fill="#f3d9b1"/></g><g class="armR"><path d="M116 104 Q142 96 146 66" stroke="#244855" stroke-width="11" stroke-linecap="round" fill="none"/><circle cx="146" cy="62" r="9" fill="#f3d9b1"/></g><ellipse cx="62" cy="176" rx="15" ry="7" fill="#244855"/><ellipse cx="98" cy="176" rx="15" ry="7" fill="#244855"/><path d="M80 20 L134 38 V94 C134 130 110 156 80 170 C50 156 26 130 26 94 V38 Z" fill="#90AEAD" stroke="#244855" stroke-width="4" stroke-linejoin="round"/><path d="M80 32 L122 46 V94 C122 122 102 144 80 156 C58 144 38 122 38 94 V46 Z" fill="#b7cccb"/><circle cx="62" cy="76" r="12" fill="#fff" stroke="#244855" stroke-width="2"/><circle cx="98" cy="76" r="12" fill="#fff" stroke="#244855" stroke-width="2"/><circle class="pu" cx="62" cy="76" r="6" fill="#2b2b2b"/><circle class="pu" cx="98" cy="76" r="6" fill="#2b2b2b"/><circle cx="48" cy="96" r="6" fill="#E64833" opacity=".35"/><circle cx="112" cy="96" r="6" fill="#E64833" opacity=".35"/><path d="M62 98 Q80 118 98 98" stroke="#2b2b2b" stroke-width="4.5" stroke-linecap="round" fill="none"/><path d="M60 28 L80 -22 L100 28 Z" fill="#E64833" stroke="#874F41" stroke-width="2" stroke-linejoin="round"/><path d="M68 10 L92 10 M64 20 L96 20" stroke="#FBE9D0" stroke-width="4" opacity=".9"/><circle cx="80" cy="-24" r="7" fill="#874F41"/></svg></div>`;
 
-const CH=['You did it! 🎉','Scam-spotting superstar! ⭐','Brilliant work! 🛡️','Nothing gets past you now! 👏','Woohoo! Keep going! 🚀'],EN=['You’ve got this! 💪','Mistakes are how we learn. Try again! 🌱','Review the lesson, then give it another go!'],TP=['Tip: hover over highlighted parts to inspect a message 🔍','Tip: read a sender’s domain from the right ➡️','Tip: no real company asks for your codes or passwords 🔐','Tip: pause when something feels urgent ⏸️','Tip: you can retake any quiz you’ve passed 🔁'];
+const CH = ['You did it! 🎉', 'Scam-spotting superstar! ⭐', 'Brilliant work! 🛡️', 'Nothing gets past you now! 👏', 'Woohoo! Keep going! 🚀'],
+      EN = ['You’ve got this! 💪', 'Mistakes are how we learn. Try again! 🌱', 'Review the lesson, then give it another go!'],
+      TP = ['Tip: hover over highlighted parts to inspect a message 🔍', 'Tip: read a sender’s domain from the right ➡️', 'Tip: no real company asks for your codes or passwords 🔐', 'Tip: pause when something feels urgent ⏸️', 'Tip: you can retake any quiz you’ve passed 🔁'];
 
-const say=a=>{const b=$('#mb');if(b)b.textContent=a[Math.floor(Math.random()*a.length)]};
+const say = a => { const b = $('#mb'); if (b) b.textContent = a[Math.floor(Math.random() * a.length)]; };
 
-function celebrate(){const m=$('#mas');if(!m)return;m.classList.remove('cel');void m.offsetWidth;m.classList.add('cel');tone(784,.12);tone(1047,.2,.12);confetti(m);setTimeout(()=>m.classList.remove('cel'),2600)}
+function celebrate() {
+  const m = $('#mas');
+  if (!m) return;
+  m.classList.remove('cel');
+  void m.offsetWidth;
+  m.classList.add('cel');
+  tone(784, .12);
+  tone(1047, .2, .12);
+  confetti(m);
+  setTimeout(() => m.classList.remove('cel'), 2600);
+}
 
-function mascotInit(win,tips){const m=$('#mas');if(!m)return;const go=()=>{if(tips){say(TP);m.classList.remove('cel');void m.offsetWidth;m.classList.add('cel');setTimeout(()=>m.classList.remove('cel'),900)}else if(win){say(CH);celebrate()}else say(EN)};m.onclick=go;m.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();go()}};if(win&&!tips)setTimeout(celebrate,400)}
+function mascotInit(win, tips) {
+  const m = $('#mas');
+  if (!m) return;
+  const go = () => {
+    if (tips) {
+      say(TP);
+      m.classList.remove('cel');
+      void m.offsetWidth;
+      m.classList.add('cel');
+      setTimeout(() => m.classList.remove('cel'), 900);
+    } else if (win) {
+      say(CH);
+      celebrate();
+    } else say(EN);
+  };
+  m.onclick = go;
+  m.onkeydown = e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); } };
+  if (win && !tips) setTimeout(celebrate, 400);
+}
 
-addEventListener('pointermove',e=>{const m=$('#mas');if(!m||!m.getBoundingClientRect)return;const r=m.getBoundingClientRect(),a=Math.atan2(e.clientY-(r.top+r.height*.4),e.clientX-(r.left+r.width/2));m.querySelectorAll('.pu').forEach(p=>p.style.transform=`translate(${Math.cos(a)*4}px,${Math.sin(a)*3}px)`)});
+addEventListener('pointermove', e => {
+  const m = $('#mas');
+  if (!m || !m.getBoundingClientRect) return;
+  const r = m.getBoundingClientRect(),
+        a = Math.atan2(e.clientY - (r.top + r.height * .4), e.clientX - (r.left + r.width / 2));
+  m.querySelectorAll('.pu').forEach(p => p.style.transform = `translate(${Math.cos(a) * 4}px,${Math.sin(a) * 3}px)`);
+});
 
 /* ---------- Start-up ---------- */
-let theme='light';
-const applyTheme=()=>{document.documentElement.dataset.theme=theme;const b=$('#tg');if(b){b.textContent=theme==='dark'?'☀️':'🌙';b.setAttribute('aria-label',theme==='dark'?'Switch to light theme':'Switch to dark theme')}};
-function boot(){
- muted=st.get('sts-mute',false);theme=st.get('sts-theme','light');applyTheme();
- $('#tg').onclick=()=>{theme=theme==='dark'?'light':'dark';st.set('sts-theme',theme);applyTheme()};
- $('#logo').onclick=()=>me?home():authView();
- const s0=st.get('sts-sess',null,sessionStorage);
- if(s0&&s0.exp>Date.now()&&users()[s0.u]){session(s0.u);home()}else authView();
+let theme = 'light';
+const applyTheme = () => {
+  document.documentElement.dataset.theme = theme;
+  const b = $('#tg');
+  if (b) {
+    b.textContent = theme === 'dark' ? '☀️' : '🌙';
+    b.setAttribute('aria-label', theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme');
+  }
+};
+
+function boot() {
+  muted = st.get('sts-mute', false);
+  theme = st.get('sts-theme', 'light');
+  applyTheme();
+  $('#tg').onclick = () => { theme = theme === 'dark' ? 'light' : 'dark'; st.set('sts-theme', theme); applyTheme(); };
+  $('#logo').onclick = () => me ? home() : authView();
+  const s0 = st.get('sts-sess', null, sessionStorage);
+  if (s0 && s0.exp > Date.now() && users()[s0.u]) { session(s0.u); home(); } else authView();
 }
+
 // All four scripts have run by the time DOMContentLoaded fires.
-document.addEventListener('DOMContentLoaded',boot);
+document.addEventListener('DOMContentLoaded', boot);

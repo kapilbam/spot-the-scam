@@ -1,24 +1,37 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="description" content="Spot the Scam! An interactive course that teaches how to tell real from fake and legit from scam.">
-<meta name="theme-color" content="#244855">
-<title>Spot the Scam!</title>
-<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="src/style.css">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="description" content="Spot the Scam! An interactive course that teaches how to tell real from fake and legit from scam.">
+  <meta name="theme-color" content="#244855">
+  <title>Spot the Scam!</title>
+
+  <!-- Google Fonts & Stylesheet -->
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="src/style.css">
 </head>
 <body>
-<main>
-<header><h1><button class="logo" id="logo" aria-label="Spot the Scam! Go to dashboard">🛡️ Spot the Scam!</button></h1><div class="sp"><div class="sp" id="top"></div><button id="tg" class="tgl" aria-label="Switch to dark theme">🌙</button></div></header>
-<section id="app"></section>
-</main>
-<canvas id="cf"></canvas>
-<!-- Classic scripts share one global scope, so the order matters. -->
-<script src="src/audio.js"></script>
-<script src="src/auth.js"></script>
-<script src="src/app.js"></script>
-<script src="src/inspection.js"></script>
+  <main>
+    <header>
+      <h1>
+        <button class="logo" id="logo" aria-label="Spot the Scam! Go to dashboard">🛡️ Spot the Scam!</button>
+      </h1>
+      <div class="sp">
+        <div class="sp" id="top"></div>
+        <button id="tg" class="tgl" aria-label="Switch to dark theme">🌙</button>
+      </div>
+    </header>
+
+    <section id="app"></section>
+  </main>
+
+  <canvas id="cf"></canvas>
+
+  <!-- Classic scripts share one global scope, so the order matters. -->
+  <script src="src/audio.js"></script>
+  <script src="src/auth.js"></script>
+  <script src="src/app.js"></script>
+  <script src="src/inspection.js"></script>
 </body>
 </html>
