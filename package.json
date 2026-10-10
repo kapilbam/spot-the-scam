@@ -1,0 +1,24 @@
+{
+  "name": "spot-the-scam",
+  "version": "1.0.0",
+  "description": "Interactive cybersecurity awareness course: spot real vs. fake emails, texts, logins and scams.",
+  "private": true,
+  "main": "index.html",
+  "scripts": {
+    "start": "python3 -m http.server 8000",
+    "serve": "npx --yes serve .",
+    "check": "node --check src/audio.js && node --check src/auth.js && node --check src/app.js && node --check src/inspection.js"
+  },
+  "keywords": [
+    "cybersecurity",
+    "security-awareness",
+    "phishing",
+    "education",
+    "vanilla-js"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kapilbam/spot-the-scam.git"
+  },
+  "homepage": "https://kapilbam.github.io/spot-the-scam/"
+}
