@@ -231,3 +231,58 @@ const EX = [
 ];
 
 // Interactive
+/* Restore comparison hotspots and the example-inspection flow. */
+const REAL_CONTEXT = {
+  0: 'This example describes a purchase check without a login link or a request for secrets. Sender names and short codes alone are not proof: verify unexpected alerts in the official app.',
+  1: 'Read the actual sender domain and check the statement through the official app. A familiar name alone cannot establish authenticity.',
+  3: 'Approve only a sign-in you personally started. If the device or location is unexpected, deny and check account activity independently.',
+  5: 'A familiar, ordinary conversation fits the existing relationship. Verify unexpected requests for money through a known number, even from an older account.',
+  6: 'Confirm the exact network name with staff. A password alone does not prove a hotspot is legitimate.',
+  9: 'Check security status in your device’s built-in security app. A website popup cannot substitute for that app.'
+};
+
+L.forEach((l, i) => {
+  if (!l.c) return;
+  l.c.r = G('✓ What to verify in this example', REAL_CONTEXT[i] || 'Verify through a known, independent channel before acting.') + l.c.r;
+  l.c.f = l.c.f.replace(/<b class="nb">(\d+)<\/b>/g, (_, number) => H(nb(number), l.c.n[Number(number) - 1] || 'Verify this detail independently.'));
+});
+
+function bindInspectionHotspots(root, feedback, labels = ['real', 'fake']) {
+  root.querySelectorAll('.hs').forEach(hotspot => {
+    const show = () => {
+      const good = hotspot.dataset.g === '1';
+      feedback.className = 'ip ' + (good ? 'okp' : 'badp');
+      const heading = document.createElement('b');
+      heading.textContent = good ? `✅ Context for the ${labels[0]} example: ` : `🚩 Warning in the ${labels[1]} example: `;
+      feedback.replaceChildren(heading, document.createTextNode(hotspot.dataset.w || 'Verify this detail independently.'));
+    };
+    hotspot.addEventListener('pointerenter', show);
+    hotspot.addEventListener('focus', show);
+    hotspot.addEventListener('click', show);
+    hotspot.addEventListener('keydown', event => {
+      if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); show(); }
+    });
+  });
+}
+
+function explore(lessonIndex, exampleIndex = 0) {
+  if (lessonIndex > 0 && !passed(lessonIndex - 1)) { lockMsg(lessonIndex); return; }
+  const examples = EX[lessonIndex];
+  if (!examples || !examples[exampleIndex]) return;
+  S = { i: lessonIndex };
+  const example = examples[exampleIndex];
+  $('#app').innerHTML = `<button id="inspection-back">← Back to lesson</button><div class="card activity-card"><p class="mute">Lesson ${lessonIndex + 1} · Example ${exampleIndex + 1} of ${examples.length}</p><h2>🔍 Inspect the message</h2><p>Hover over highlighted parts to inspect them. On mobile, tap; with a keyboard, focus and press Enter.</p><div id="inspection-example">${example[0]}</div><div class="ip" id="inspection-tip" aria-live="polite">Choose a highlighted part to see its explanation.</div><div class="rfb"><button class="opt" id="inspection-real">Looks legitimate</button><button class="opt" id="inspection-fake">Looks suspicious</button></div><div id="inspection-result" aria-live="polite"></div><div class="nv"><button id="inspection-prev" ${exampleIndex === 0 ? 'disabled' : ''}>← Previous example</button><button class="pri" id="inspection-next">${exampleIndex + 1 < examples.length ? 'Next example →' : 'Start lesson quiz →'}</button></div></div>`;
+  $('#inspection-back').onclick = () => lesson(lessonIndex);
+  $('#inspection-prev').onclick = () => explore(lessonIndex, exampleIndex - 1);
+  $('#inspection-next').onclick = () => exampleIndex + 1 < examples.length ? explore(lessonIndex, exampleIndex + 1) : lq(lessonIndex);
+  const judge = answer => {
+    const correct = answer === example[1];
+    $('#inspection-result').innerHTML = `<div class="fb ${correct ? 'ok' : 'bad'}"><b>${correct ? 'Good observation! ' : 'Let’s look again. '}</b>${esc(example[2])}</div>`;
+    $('#inspection-real').disabled = true;
+    $('#inspection-fake').disabled = true;
+  };
+  $('#inspection-real').onclick = () => judge(0);
+  $('#inspection-fake').onclick = () => judge(1);
+  bindInspectionHotspots($('#inspection-example'), $('#inspection-tip'));
+  scrollTo(0, 0);
+}

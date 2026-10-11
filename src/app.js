@@ -434,7 +434,7 @@ let S;
 
 /* ---------- Lesson page, quiz engine and final exam ---------- */
 
-const cmpHtml = c => `<h3>👀 Spot the differences</h3><div class="cmp"><div><h3 class="do">${(c.lb || ['✅ The real thing'])[0]}</h3>${c.r}</div><div><h3 class="dont">${(c.lb || [0, '🚩 The fake'])[1]}</h3>${c.f}</div></div><div class="ip" id="cn">Hover over the highlighted parts on BOTH sides to see why the real one is real and why the fake one is fake.</div><p><b>Key differences to remember:</b></p><ol class="nl">${c.n.map(x => `<li>${x}</li>`).join('')}</ol>`;
+const cmpHtml = c => `<h3>👀 Spot the differences</h3><div class="cmp"><div><h3 class="do">${(c.lb || ['✅ The real thing'])[0]}</h3>${c.r}</div><div><h3 class="dont">${(c.lb || [0, '🚩 The fake'])[1]}</h3>${c.f}</div></div><div class="ip" id="cn">Hover over highlighted parts on both sides to inspect the clues. On mobile, tap them; with a keyboard, focus and press Enter.</div><p><b>Key differences to remember:</b></p><ol class="nl">${c.n.map(x => `<li>${x}</li>`).join('')}</ol>`;
 
 function lesson(i) {
   if (i > 0 && !passed(i - 1)) { lockMsg(i); return; }
@@ -446,18 +446,7 @@ function lesson(i) {
   $('#go').onclick = () => explore(i);
   if ($('#sq')) $('#sq').onclick = () => lq(i);
   scrollTo(0, 0);
-  const W = (L[i].c && L[i].c.w) || ['real', 'fake'];
-  document.querySelectorAll('.cmp .hs').forEach(b => {
-    const f = () => {
-      const g = b.dataset.g === '1';
-      $('#cn').className = 'ip ' + (g ? 'okp' : 'badp');
-      $('#cn').innerHTML = `<b>${g ? `✅ Why this is ${W[0]}:` : `🚩 Why this is ${W[1]}:`}</b> ${b.dataset.w}`;
-    };
-    b.addEventListener('pointerenter', f);
-    b.addEventListener('focus', f);
-    b.addEventListener('click', f);
-    b.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); f(); } });
-  });
+  if (l.c) bindInspectionHotspots($('#app .cmp'), $('#cn'), l.c.w || ['real', 'fake']);
 }
 
 function runQuiz(qs, m) { S = { i: m.i, qs, qi: 0, ok: 0, miss: {}, m }; askQ(); }
@@ -785,7 +774,7 @@ const MQ = [
   [['Ransomware', 'Locks files and demands payment'], ['3-2-1 backups', '3 copies, 2 media types, 1 offline'], ['Cracked installer', 'A common way malware spreads'], ['Software updates', 'Patch security holes attackers use']]
 ];
 
-MQ.forEach((m, i) => L[i].m = { d: m[0], p: m[1] });
+MQ.forEach((m, i) => L[i].m = { d: 'Match each item with its meaning.', p: m });
 
 KF[4][5] = KF[4][5].replace('A <b>USB stick you find</b>', '<b>USB baiting</b>: a <b>USB stick you find</b>');
 L[4].k = KF[4];
@@ -795,7 +784,7 @@ const rfq = x => ({ t: 'rf', f: x[0], fake: x[1], why: x[2] }),
 
 const buildQuiz = i => sh([...sh(L[i].q).slice(0, 5).map(q => ({ q, i })), ...sh(RF[i]).slice(0, 4).map(x => ({ q: rfq(x), i })), { q: mtq(i), i }]);
 
-const buildExam = () => sh(L.flatMap((l, i) => [{ q: sh(EXQ[i])[0], i }, { q: i % 2 ? { t: 'mt', d: EXM[i].d, p: EXM[i].p } : rfq(sh(EXR[i])[0]), i }]));
+const buildExam = () => sh(L.flatMap((l, i) => [{ q: sh(l.q)[0], i }, { q: i % 2 ? mtq(i) : rfq(sh(RF[i])[0]), i }]));
 
 function qDone(g, i, msg) {
   if (g) S.ok++; else S.miss[i] = (S.miss[i] || 0) + 1;
