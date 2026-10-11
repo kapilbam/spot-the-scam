@@ -278,7 +278,7 @@ function stopSheet(k) {
   const n = nDone(), p = prog();
   if (k === 10) {
     if (n < 10) return showLock('Final exam is locked', `Pass all 10 lessons first. You have passed <b>${n}/10</b> so far.`);
-    return sheet(`<div class="em">🏆</div><h3>Final exam</h3><p>20 fresh questions from every lesson.${best() >= 0 ? ` Your best: <b>${best()}/20</b>.` : ''}</p><button class="pri" id="sa">${best() >= 0 ? 'Retake the exam' : 'Start the exam'}</button> <button id="sc">Close</button>`, c => { $('#sa').onclick = () => { c(); examStart(); }; $('#sc').onclick = c; });
+    return sheet(`<div class="em">🏆</div><h3>Final exam</h3><p>20 questions from every lesson · 10-minute time limit. Feedback appears after submission.${best() >= 0 ? ` Your best: <b>${best()}/20</b>.` : ''}</p><button class="pri" id="sa">${best() >= 0 ? 'Retake the exam' : 'Start the exam'}</button> <button id="sc">Close</button>`, c => { $('#sa').onclick = () => { c(); examStart(); }; $('#sc').onclick = c; });
   }
   if (k > 0 && !passed(k - 1)) return lockMsg(k);
   const l = L[k], s = p[k] ?? -1;
@@ -485,22 +485,103 @@ function lessonDone() {
   mascotInit(pass);
 }
 
-function examStart() {
-  if (nDone() < 10) { showLock('Final exam is locked', `Pass all 10 lessons first. You have passed <b>${nDone()}/10</b> so far.`); return; }
-  runQuiz(buildExam(), { i: null, title: 'Final exam', fin: examDone });
+/* The final exam uses deferred grading, separate from lesson practice quizzes. */
+let finalAttempt = null;
+let finalTimer = null;
+
+function gradeFinalQuestion(q, answer) {
+  if (Array.isArray(q)) return answer !== null && answer === q[2];
+  if (q.t === 'rf') return answer !== null && answer === q.fake;
+  return Array.isArray(answer) && q.p.every((pair, j) => answer[j] === pair[1]);
 }
 
-function examDone() {
-  const s = S.ok;
-  saveExam(s);
-  const lv = s >= 18 ? '🏆 Cyber Master' : s >= 14 ? '🎯 Scam Sniper' : s >= 10 ? '🛡️ Phish Defender' : '🌱 Keep practicing',
-        w = Object.keys(S.miss).sort((a, b) => S.miss[b] - S.miss[a]);
-  $('#app').innerHTML = `<div class="card">${MAS('in')}<div class="bub3" id="mb">${s >= 12 ? 'Exam passed! 🎓' : 'Good effort! Review and try again 💪'}</div><h2>Final exam: ${s}/20</h2><p><span class="badge">${lv}</span></p><p>${s >= 18 ? 'Outstanding. You can spot nearly every trick.' : s >= 14 ? 'Strong knowledge. A little polish on a few topics will make you scam-proof.' : s >= 10 ? 'Solid base, but some gaps remain. Review the topics below.' : 'Time for a refresher. Revisit the lessons below and try again.'}</p>${w.length ? `<h3>Topics to review</h3>${w.map(i => `<p>${L[i].e} <b>${L[i].t}</b> (${S.miss[i]} missed) <button data-r="${i}">Review</button></p>`).join('')}` : '<p><b>No misses. Perfect!</b></p>'}<button class="pri" id="rt">Retake the exam</button> <button id="hm">All lessons</button></div>`;
-  $('#hm').onclick = home;
-  $('#rt').onclick = examStart;
-  document.querySelectorAll('[data-r]').forEach(b => b.onclick = () => lesson(+b.dataset.r));
-  mascotInit(s >= 12);
+function examStart() {
+  if (nDone() < 10) { showLock('Final exam is locked', `Pass all 10 lessons first. You have passed <b>${nDone()}/10</b> so far.`); return; }
+  clearInterval(finalTimer);
+  const qs = buildExam();
+  finalAttempt = { qs, answers: qs.map(() => null), deadline: Date.now() + 10 * 60 * 1000, submitted: false, user: me };
+  const questions = qs.map(({ q, i }, index) => {
+    let content;
+    if (Array.isArray(q)) {
+      content = `<h3>${esc(q[0])}</h3>${sh(q[1].map((text, value) => ({ text, value }))).map(o => `<label class="exam-option"><input type="radio" name="exam-${index}" data-question="${index}" value="${o.value}"><span>${esc(o.text)}</span></label>`).join('')}`;
+    } else if (q.t === 'rf') {
+      const labels = i === 2 ? ['Looks legitimate', 'Looks suspicious'] : L[i].ql || ['Looks legitimate', 'Looks suspicious'];
+      content = `<h3>Look closely. Which is it?</h3>${q.f}${labels.map((text, value) => `<label class="exam-option"><input type="radio" name="exam-${index}" data-question="${index}" value="${value}"><span>${esc(text)}</span></label>`).join('')}`;
+    } else {
+      const choices = sh(q.p.map(pair => pair[1]));
+      content = `<h3>Match each item with its meaning</h3>${q.p.map((pair, j) => `<label for="exam-match-${index}-${j}">${esc(pair[0])}</label><select id="exam-match-${index}-${j}" data-question="${index}" data-match="${j}"><option value="">Choose an answer</option>${choices.map(text => `<option value="${esc(text)}">${esc(text)}</option>`).join('')}</select>`).join('')}`;
+    }
+    return `<section class="card exam-question" aria-labelledby="exam-title-${index}"><p class="mute" id="exam-title-${index}">Question ${index + 1} of ${qs.length} · ${esc(L[i].t)}</p>${content}</section>`;
+  }).join('');
+  $('#app').innerHTML = `<div id="timed-exam"><div class="card exam-toolbar"><h2>Final exam</h2><div class="sp"><b id="exam-clock" role="timer" aria-label="Time remaining">10:00</b><span id="exam-count" role="status">0 of ${qs.length} answered</span><button class="pri" id="exam-submit-top">Submit quiz</button></div></div><p>Answer all ${qs.length} questions within 10 minutes. You can change any answer before submitting. Answers and feedback appear only after submission. Unanswered questions score zero. Time running out submits automatically.</p><p class="mute">Keep this page open. Leaving or reloading ends this attempt.</p><div id="exam-warning" role="status"></div>${questions}<button class="pri" id="exam-submit-bottom">Submit quiz</button></div>`;
+  const attempt = finalAttempt;
+  const updateCount = () => {
+    const count = attempt.answers.filter((answer, index) => {
+      const q = attempt.qs[index].q;
+      return !Array.isArray(q) && q.t === 'mt' ? Array.isArray(answer) && answer.length === q.p.length && answer.every(v => v !== '') : answer !== null;
+    }).length;
+    $('#exam-count').textContent = `${count} of ${qs.length} answered`;
+  };
+  document.querySelectorAll('[data-question]').forEach(control => control.addEventListener('change', () => {
+    if (attempt.submitted) return;
+    if (Date.now() >= attempt.deadline) { submitFinal(true); return; }
+    const index = +control.dataset.question;
+    if (control.dataset.match !== undefined) {
+      if (!Array.isArray(attempt.answers[index])) attempt.answers[index] = attempt.qs[index].q.p.map(() => '');
+      attempt.answers[index][+control.dataset.match] = control.value;
+    } else attempt.answers[index] = +control.value;
+    updateCount();
+  }));
+  $('#exam-submit-top').onclick = $('#exam-submit-bottom').onclick = () => submitFinal(false);
+  let warned = false;
+  const tick = () => {
+    if (finalAttempt !== attempt || attempt.submitted || me !== attempt.user || !$('#timed-exam')) { clearInterval(finalTimer); return; }
+    const seconds = Math.max(0, Math.ceil((attempt.deadline - Date.now()) / 1000));
+    $('#exam-clock').textContent = `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`;
+    if (seconds <= 60 && !warned) { warned = true; $('#exam-warning').textContent = 'One minute or less remaining. Review your answers and submit.'; }
+    if (seconds === 0) submitFinal(true);
+  };
+  finalTimer = setInterval(tick, 250);
+  tick();
+  scrollTo(0, 0);
 }
+
+function submitFinal(timedOut) {
+  const attempt = finalAttempt;
+  if (!attempt || attempt.submitted || me !== attempt.user) return;
+  attempt.submitted = true;
+  attempt.timedOut = timedOut || Date.now() >= attempt.deadline;
+  clearInterval(finalTimer);
+  attempt.grades = attempt.qs.map(({ q }, index) => gradeFinalQuestion(q, attempt.answers[index]));
+  attempt.score = attempt.grades.filter(Boolean).length;
+  saveExam(attempt.score);
+  $('#app').innerHTML = `<div class="card"><h2>Quiz submitted</h2><p>${attempt.timedOut ? 'The 10-minute time limit ended, so your saved answers were submitted automatically.' : 'Your answers have been submitted.'}</p><p>Open your results to see your score and feedback for every question.</p><button class="pri" id="exam-view-results">View quiz results</button></div>`;
+  $('#exam-view-results').onclick = finalReport;
+  scrollTo(0, 0);
+}
+
+function finalReport() {
+  const attempt = finalAttempt;
+  if (!attempt || !attempt.submitted || me !== attempt.user) return;
+  const report = attempt.qs.map(({ q, i }, index) => {
+    const answer = attempt.answers[index];
+    let detail;
+    if (Array.isArray(q)) {
+      detail = `<h3>${esc(q[0])}</h3><p><b>Your answer:</b> ${answer === null ? 'Unanswered' : esc(q[1][answer])}</p><p><b>Correct answer:</b> ${esc(q[1][q[2]])}</p><p>${esc(q[3])}</p>`;
+    } else if (q.t === 'rf') {
+      const labels = i === 2 ? ['Looks legitimate', 'Looks suspicious'] : L[i].ql || ['Looks legitimate', 'Looks suspicious'];
+      detail = `<h3>Look closely. Which is it?</h3>${q.f}<p><b>Your answer:</b> ${answer === null ? 'Unanswered' : esc(labels[answer])}</p><p><b>Correct answer:</b> ${esc(labels[q.fake])}</p><p>${esc(q.why)}</p>`;
+    } else {
+      detail = `<h3>Match each item with its meaning</h3><ul>${q.p.map((pair, j) => `<li><b>${esc(pair[0])}</b><br>Your answer: ${answer && answer[j] ? esc(answer[j]) : 'Unanswered'}<br>Correct match: ${esc(pair[1])} ${answer && answer[j] === pair[1] ? '✓' : '✗'}</li>`).join('')}</ul><p>Every pair must match to earn the point for this question.</p>`;
+    }
+    return `<section class="card"><p class="mute">Question ${index + 1} · ${esc(L[i].t)}</p><div class="fb ${attempt.grades[index] ? 'ok' : 'bad'}"><b>${attempt.grades[index] ? '✓ Correct' : '✗ Incorrect or unanswered'}</b></div>${detail}</section>`;
+  }).join('');
+  $('#app').innerHTML = `<div class="card"><h2>Your final exam results</h2><p class="side-stat">${attempt.score}/${attempt.qs.length}</p><p><b>${attempt.score >= 12 ? 'Exam passed' : 'Keep practising'}</b> · Pass mark: 12/20</p><p>${attempt.timedOut ? 'Automatically submitted when time expired.' : 'Submitted by you before the time limit.'}</p><button class="pri" id="exam-retry">Retake exam</button> <button id="exam-home">Dashboard</button></div><h2>Question-by-question feedback</h2>${report}`;
+  $('#exam-retry').onclick = examStart;
+  $('#exam-home').onclick = home;
+  scrollTo(0, 0);
+}
+
 
 /* ---------- Multiple-choice question banks ---------- */
 
