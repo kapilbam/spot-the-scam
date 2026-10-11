@@ -797,7 +797,10 @@ function qDone(g, i, msg) {
 const qHead = () => `<p class="mute">${S.m.title} · Question ${S.qi + 1} of ${S.qs.length}</p><div class="bar" style="margin-bottom:14px"><i style="width:${S.qi / S.qs.length * 100}%"></i></div>`;
 
 function askRF(q, i) {
-  const lab = L[i].ql || ['✅ Real / legit', '🚩 Fake / scam'];
+  // Password-lesson mockups ask about authenticity, not password strength.
+  const lab = q.labels || (i === 2
+    ? ['✅ Looks legitimate', '🚩 Looks suspicious']
+    : L[i].ql || ['✅ Real / legit', '🚩 Fake / scam']);
   $('#app').innerHTML = `<div class="card">${qHead()}<h2>🔍 Look closely. Which is it?</h2>${q.f}<div class="rfb"><button class="opt" data-v="0">${lab[0]}</button><button class="opt" data-v="1">${lab[1]}</button></div><div id="fb" aria-live="polite"></div></div>`;
   scrollTo(0, 0);
   document.querySelectorAll('.rfb .opt').forEach(b => b.onclick = () => {
