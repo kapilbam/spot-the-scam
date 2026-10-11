@@ -1980,3 +1980,130 @@ header {
     padding: 8px;
   }
 }
+
+/* ---------- Reference palette: teal, coral, clay, sage, cream ---------- */
+:root {
+  --bg: #FBE9D0;
+  --panel: #fff7eb;
+  --ink: #244855;
+  --mute: #5d625c;
+  --line: #d8c5ac;
+  --acc: #244855;
+  --accd: #17333e;
+  --onacc: #FBE9D0;
+  --soft: #dce6df;
+  --warm: #f4d9ba;
+  --inp: #fffaf2;
+  --chipbg: #efdfc8;
+  --chipbd: #c8b296;
+  --ok: #30624d;
+  --bad: #a43122;
+  --okbg: #dce8dc;
+  --okbg2: #edf1e5;
+  --badbg: #f9d5c7;
+  --badbg2: #fce7dc;
+  --okbd: #a9c3ad;
+  --badbd: #dca697;
+  --okfg: #24553d;
+  --badfg: #862c20;
+  --mapa: #90AEAD;
+  --mapb: #FBE9D0;
+  --road: #244855;
+  --roadedge: #874F41;
+  --roadline: #FBE9D0;
+  --roaddone: #90AEAD;
+  --surface-mint: #cdded6;
+  --surface-blue: #d8e3df;
+  --surface-lilac: #f5d6c5;
+  --surface-gold: #f5dfbf;
+  --accent-blue: #244855;
+  --accent-lilac: #E64833;
+  --accent-gold: #874F41;
+  --ambient-teal: rgb(144 174 173 / 45%);
+  --ambient-gold: rgb(230 72 51 / 12%);
+  --ambient-blue: rgb(135 79 65 / 14%);
+}
+
+:root[data-theme="dark"] {
+  --bg: #11252e;
+  --panel: #1c3742;
+  --ink: #FBE9D0;
+  --mute: #c1ccc5;
+  --line: #486069;
+  --acc: #90AEAD;
+  --accd: #bdd0c9;
+  --onacc: #11252e;
+  --soft: #2b4951;
+  --warm: #503a30;
+  --inp: #162c35;
+  --chipbg: #2b444b;
+  --chipbd: #5a7376;
+  --ok: #a5d6b7;
+  --bad: #ffa38c;
+  --okbg: #27483b;
+  --okbg2: #213c34;
+  --badbg: #55332b;
+  --badbg2: #412e29;
+  --okbd: #537e63;
+  --badbd: #986252;
+  --okfg: #d4edda;
+  --badfg: #ffd8c7;
+  --mapa: #244855;
+  --mapb: #172c34;
+  --road: #0b1b23;
+  --roadedge: #874F41;
+  --roadline: #FBE9D0;
+  --roaddone: #90AEAD;
+  --surface-mint: #305351;
+  --surface-blue: #294953;
+  --surface-lilac: #53382f;
+  --surface-gold: #493b2d;
+  --accent-blue: #90AEAD;
+  --accent-lilac: #E64833;
+  --accent-gold: #cf9b82;
+  --ambient-teal: rgb(144 174 173 / 16%);
+  --ambient-gold: rgb(230 72 51 / 10%);
+  --ambient-blue: rgb(135 79 65 / 16%);
+}
+
+header {
+  --ink: #FBE9D0;
+  --mute: #d8e0d7;
+  --panel: #244855;
+  --soft: #315965;
+  --line: #58737b;
+  --acc: #FBE9D0;
+  --accd: #ffffff;
+  --onacc: #244855;
+  background: linear-gradient(110deg, #244855, #315965);
+  border-bottom: 4px solid #E64833;
+}
+
+header .logo,
+header .logo:hover {
+  color: #FBE9D0;
+}
+
+header button:hover:not(:disabled) {
+  border-color: #FBE9D0;
+}
+
+header button.logo:hover {
+  background: transparent;
+}
+
+.brand-shieldy {
+  filter: drop-shadow(0 2px 3px rgb(0 0 0 / 25%));
+}
+
+.dashboard-layout .learning-content > .card:first-child {
+  border-top-color: #90AEAD;
+}
+
+.arcade-card {
+  border-top-color: #E64833;
+}
+
+.lesson-layout .learning-content > .card > h3 {
+  border-left-color: #874F41;
+}
