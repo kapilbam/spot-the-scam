@@ -465,7 +465,7 @@ function askQ() {
     g ? ok() : no();
     document.querySelectorAll('.opt').forEach((x, k) => { x.disabled = true; if (S.o[k][1]) x.classList.add('right'); });
     if (!g) b.classList.add('wrong');
-    $('#fb').innerHTML = `<div class="fb"><b>${g ? 'Nice one! ' : 'Not quite. '}</b>${q[3]}</div><button class="pri" id="nx">${S.qi < S.qs.length - 1 ? 'Next question' : 'See results'}</button>`;
+    $('#fb').innerHTML = `<div class="fb ${g ? 'ok' : 'bad'}"><b>${g ? '✓ Correct! ' : '✗ Incorrect. '}</b>${q[3]}</div><button class="pri" id="nx">${S.qi < S.qs.length - 1 ? 'Next question' : 'See results'}</button>`;
     $('#nx').focus();
     $('#nx').onclick = () => { S.qi++; S.qi < S.qs.length ? askQ() : S.m.fin(); };
   });
@@ -789,7 +789,7 @@ const buildExam = () => sh(L.flatMap((l, i) => [{ q: sh(l.q)[0], i }, { q: i % 2
 function qDone(g, i, msg) {
   if (g) S.ok++; else S.miss[i] = (S.miss[i] || 0) + 1;
   g ? ok() : no();
-  $('#fb').innerHTML = `<div class="fb ${g ? 'ok' : 'bad'}"><b>${g ? 'Nice one! ' : 'Not quite. '}</b>${msg}</div><button class="pri" id="nx">${S.qi < S.qs.length - 1 ? 'Next question' : 'See results'}</button>`;
+  $('#fb').innerHTML = `<div class="fb ${g ? 'ok' : 'bad'}"><b>${g ? '✓ Correct! ' : '✗ Incorrect. '}</b>${msg}</div><button class="pri" id="nx">${S.qi < S.qs.length - 1 ? 'Next question' : 'See results'}</button>`;
   $('#nx').focus();
   $('#nx').onclick = () => { S.qi++; S.qi < S.qs.length ? askQ() : S.m.fin(); };
 }

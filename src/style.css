@@ -2107,3 +2107,49 @@ header button.logo:hover {
 .lesson-layout .learning-content > .card > h3 {
   border-left-color: #874F41;
 }
+
+/* Answer feedback: clear status colors in both themes. */
+.fb.ok {
+  color: var(--okfg);
+  background: var(--okbg);
+  border: 1px solid var(--okbd);
+  border-left: 6px solid var(--ok);
+}
+
+.fb.bad {
+  color: var(--badfg);
+  background: var(--badbg);
+  border: 1px solid var(--badbd);
+  border-left: 6px solid var(--bad);
+}
+
+.opt.right,
+.chip.right {
+  color: var(--okfg);
+  background: var(--okbg);
+  border-color: var(--ok);
+  opacity: 1;
+}
+
+.opt.wrong,
+.chip.wrong {
+  color: var(--badfg);
+  background: var(--badbg);
+  border-color: var(--bad);
+  opacity: 1;
+}
+
+/* Preserve the account-menu contrast correction. */
+header,
+header button,
+header .umenu {
+  color: #FBE9D0;
+}
+
+header .umenu .mute {
+  color: #d8e0d7;
+}
+
+header .uav {
+  color: #244855;
+}
